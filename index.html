@@ -71,7 +71,15 @@ main{padding-top:6px;padding-bottom:110px}
 .ch{display:flex;align-items:center;gap:10px}
 .ch .ic{width:22px;height:22px;flex:none;color:var(--c)}
 .ch .ic svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-.ch h3{flex:1;margin:0;font-size:14px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--mute)}
+.ch h3{flex:1;margin:0;font-size:19px;font-weight:900;letter-spacing:-.01em;color:var(--ink)}
+.grp{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:22px 4px 10px}
+.card.fold{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:var(--ink);padding:16px 18px;margin-bottom:10px;cursor:pointer}
+.card.fold .ic{width:22px;height:22px;flex:none;color:var(--c)}
+.card.fold .ic svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.card.fold .ft{flex:1;min-width:0}
+.card.fold .ft b{display:block;font-size:17px;font-weight:900}
+.card.fold .ft small{display:block;font-size:14px;font-weight:700;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card.fold .chev{font-size:26px;font-weight:700;color:var(--mute);line-height:1}
 .ch .ed{border:0;background:none;color:var(--mute);font-weight:800;font-size:14px;cursor:pointer;min-height:36px;padding:0 4px}
 .card .sub{margin:2px 0 4px 32px;color:var(--mute);font-size:14px;font-weight:700}
 .rows{margin-top:8px}
@@ -262,7 +270,7 @@ function summary(s){
   }
   const td=secTodos(s),dt=secDates(s,120);
   if(!td.length&&!dt.length)return '';
-  const head=td.length?`${td.length} thing${td.length>1?'s':''} to sort`:dt[0].days<=14?`${esc(dt[0].card)} ${dt[0].days<=1?inTxt(dt[0].days).toLowerCase():'in '+inTxt(dt[0].days)}`:'Nothing to sort';
+  const head=td.length?`${td.length} thing${td.length>1?'s':''} to sort`:dt[0].days<=14?`${esc(dt[0].card)} ${dt[0].days<=1?inTxt(dt[0].days).toLowerCase():'in '+inTxt(dt[0].days)}`:'All sorted';
   return `<section class="sum"><p class="kick">${kick}</p><h2>${head}</h2>
     ${dt.slice(0,3).map(u=>`<a class="srow" href="${link(s.id,u.ci)}"><b>${esc(u.card)}<small>${esc(u.label)} · ${fmt(u.d)}</small></b><span class="r">${inTxt(u.days)}</span></a>`).join('')}
     ${td.map(x=>`<a class="srow warn" href="${link(s.id,x.ci)}"><b>${esc(x.text)}<small>${esc(x.card)}</small></b><span class="r">›</span></a>`).join('')}</section>`;
@@ -292,7 +300,10 @@ function card(s,c,ci,q){
   const empty=(c.f||[]).filter(f=>!f.v&&f.k!=='check').length;
   const checks=(c.f||[]).filter(f=>f.k==='check'),done=checks.filter(f=>f.v).length;
   const ordered=c.list?[...all.filter(x=>!x.f.v),...all.filter(x=>x.f.v)]:[...all.filter(x=>TODO.test(x.f.l||'')),...all.filter(x=>!TODO.test(x.f.l||''))];
-  const open=!!q||c.open||OPEN.has(key)||checks.length>0||c.list||ordered.length<=SHOW+1;
+  const fold=!q&&!c.open&&!c.list&&!checks.length&&!OPEN.has(key)&&(s.cards||[]).length>=5;
+  if(fold)return `<button class="card fold" id="c-${s.id}-${ci}" style="--c:${esc(s.color)}" data-act="more" data-k="${esc(key)}"><span class="ic">${icon(s.id)}</span><span class="ft"><b>${esc(c.t)}</b>${c.s?`<small>${esc(c.s)}</small>`:''}</span><span class="chev">›</span></button>`;
+  const big=(s.cards||[]).length>=5&&!c.open&&!c.list;
+  const open=!!q||big||c.open||OPEN.has(key)||checks.length>0||c.list||ordered.length<=SHOW+1;
   const vis=open?ordered:ordered.slice(0,SHOW);
   const hidden=ordered.length-vis.length+(c.n&&!open?1:0);
   return `<article class="card${open?'':' closed'}" id="c-${s.id}-${ci}" style="--c:${esc(s.color)}">
@@ -301,7 +312,7 @@ function card(s,c,ci,q){
     ${checks.length&&!c.list?`<p class="sub">${done===checks.length?'All done':`${done} of ${checks.length} done`}</p><div class="prog"><i style="width:${done/checks.length*100}%"></i></div>`:c.s?`<p class="sub">${hl(c.s,q)}</p>`:''}
     ${vis.length?`<div class="rows">${vis.map(({f,fi})=>`<div class="r1${TODO.test(f.l||'')?' todo':''}">${val(f,ci,fi,s.id,q)}</div>`).join('')}</div>`:''}
     ${!open?`<button class="more" data-act="more" data-k="${esc(key)}">Show ${ordered.length-vis.length} more</button>`:''}
-    ${open&&!checks.length&&ordered.length>SHOW+1&&!q?`<button class="more" data-act="less" data-k="${esc(key)}">Show less</button>`:''}
+    ${open&&!c.open&&!checks.length&&(ordered.length>SHOW+1||big)&&!q?`<button class="more" data-act="less" data-k="${esc(key)}">${big?'Close':'Show less'}</button>`:''}
     ${c.list&&!q?`<form class="qa" data-add="${s.id}/${ci}"><input name="it" placeholder="Add ${s.id==='shopping'?'an item':'a thing to do'}" autocomplete="off" aria-label="Add"><button class="pill go" type="submit">Add</button></form>${done?`<button class="more" data-act="clear" data-k="${s.id}/${ci}">Clear ${done} ticked</button>`:''}`:''}
     ${open&&c.n?`<p class="note">${hl(c.n,q)}</p>`:''}
     ${open&&empty&&!q?`<p class="note" style="font-style:italic">${empty} empty field${empty>1?'s':''}, tap Edit to fill in</p>`:''}
@@ -428,12 +439,14 @@ function render(){
   if(q){main.innerHTML=search(secs,q);return}
   const s=secs.find(x=>x.id===t);
   if(!s){location.hash=secs[0].id;return}
+  {const k=decodeURIComponent(location.hash.slice(1)).split('/')[1];if(k!==undefined)OPEN.add(s.id+'/'+k)}
   const cards=s.cards||[];
   main.innerHTML=`<h2 class="pg">${esc(s.title)}</h2>${s.blurb?`<p class="lede">${esc(s.blurb)}</p>`:'<div style="height:12px"></div>'}
-    ${s.id==='todo'?weekStrip():s.id==='study'?(canvasSummary()||summary(s)):summary(s)}
+    ${s.id==='todo'?weekStrip():summary(s)}
     ${s.id==='study'?canvasCard(s):''}
+    ${s.charts&&s.charts.length?cards.map((c,ci)=>c.open?card(s,c,ci):'').join(''):''}
     ${(s.charts||[]).map(chartHtml).join('')}
-    ${cards.map((c,ci)=>card(s,c,ci)).join('')}
+    ${cards.map((c,ci)=>s.charts&&s.charts.length&&c.open?'':(c.g&&c.g!==(cards[ci-1]||{}).g?`<h4 class="grp">${esc(c.g)}</h4>`:'')+card(s,c,ci)).join('')}
     ${S.edit&&S.edit.s===s.id&&S.edit.c===-1?editForm(s,S.edit.draft):''}`;
   const ci=decodeURIComponent(location.hash.slice(1)).split('/')[1];
   if(ci!==undefined){const el=document.getElementById(`c-${s.id}-${ci}`);if(el){el.scrollIntoView({block:'start'});el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1600)}}
