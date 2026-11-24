@@ -113,6 +113,18 @@ main{padding-top:6px;padding-bottom:110px}
 .st i u{display:block;height:100%;background:var(--s);border-radius:99px}
 .st .sb{display:flex;gap:6px;margin-top:10px}
 .st .sb .pill{flex:1;min-width:0}
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.callt{display:block;text-decoration:none;color:var(--ink);padding:11px 12px;border-radius:16px;background:var(--soft);border:1px solid var(--line)}
+.callt b{display:block;font-size:14px;font-weight:900;line-height:1.25}
+.callt span{display:block;font-size:12px;font-weight:700;color:var(--mute);margin-top:3px}
+.callt.sos{grid-column:1/-1;background:var(--accent);border-color:transparent;color:var(--onaccent);text-align:center}
+.callt.sos b{font-size:17px}.callt.sos span{color:inherit;opacity:.85}
+.ctiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin:-4px 0 16px}
+.ct{border-radius:20px;padding:14px 10px;text-align:center;background:var(--card);border:1px solid var(--line)}
+.ct .ring{width:62px;height:62px;border-radius:50%;margin:0 auto 8px;display:grid;place-items:center}
+.ct .ring span{width:48px;height:48px;border-radius:50%;background:var(--card);display:grid;place-items:center;font-size:20px;font-weight:900;color:var(--k)}
+.ct b{display:block;font-size:14px;font-weight:900}
+.ct small{display:block;font-size:12px;font-weight:700;color:var(--mute);margin-top:2px}
 .grp{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:22px 4px 10px}
 .card.fold{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:var(--ink);padding:16px 18px;margin-bottom:10px;cursor:pointer}
 .card.fold .ic{width:22px;height:22px;flex:none;color:var(--c)}
@@ -317,7 +329,7 @@ function summary(s){
     const tile=(b,l,c)=>`<div class="ht" style="--h:${c}"><b>${b}</b><span>${l}</span></div>`;
     return `<section class="hbeat"><div class="hb-top"><p class="kick">Still ticking</p><span class="hb-dot"></span></div>
       <svg class="ecg" viewBox="0 0 600 120" preserveAspectRatio="none"><path d="M0 70 H150 L170 70 L185 40 L200 95 L215 15 L235 105 L250 70 H330 L345 60 L360 70 H600"/></svg>
-      <div class="htiles">${nx?tile(ago(nx),esc(nx.label),'#f08aa6'):''}${cl?tile(ago(cl),'until Claire','#b48cf0'):''}${st?tile(st,'health stock',low.length?'#f2b84b':'#5fc9a8'):''}</div></section>
+      <div class="htiles">${nx?tile(nx.days===0?'Today':nx.days===1?'Tmrw':ago(nx),esc(nx.card),'#f08aa6'):''}${cl?tile(ago(cl),'until Claire','#b48cf0'):''}${st?tile(st,'health stock',low.length?'#f2b84b':'#5fc9a8'):''}</div></section>
       ${td.length?`<section class="sum"><p class="kick">To sort</p>${td.map(x=>`<a class="srow warn" href="${link(s.id,x.ci)}"><b>${esc(x.text)}<small>${esc(x.card)}</small></b><span class="r">›</span></a>`).join('')}</section>`:''}`;
   }
   if(s.id==='study'){
@@ -330,8 +342,7 @@ function summary(s){
     return `<section class="hero" style="background:linear-gradient(135deg,#2f8f9d 0%,#4f6fd8 55%,#9a5ce0 100%)"><p class="kick">${nx?'Next deadline':'Study'}</p>
       <div class="big">${nx?(dn===0?'Today':dn===1?'1 day':dn+' days'):'Free'}</div><div class="lbl">${nx?esc(nx.title):'Nothing due right now'}</div>
       <div class="stats3"><div><b>${wk}</b>due this week</div><div><b>${two}</b>in the next 2 weeks</div><div><b>${it.length}</b>left to do</div></div>
-      ${Object.keys(by).length?`<div class="chips">${Object.entries(by).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`<span>${esc(k)} <b>${n}</b></span>`).join('')}</div>`:''}
-      <p class="quip">“${esc(line)}”</p></section>`;
+      <p class="quip">“${esc(line)}”</p></section>${Object.keys(by).length?`<div class="ctiles">${Object.entries(by).sort((a,b)=>b[1]-a[1]).map(([k,n],i)=>{const first=it.find(a=>(SHORT[a.course]||a.course)===k),d=daysTo(first.due),col=['#4f6fd8','#2f8f9d','#9a5ce0','#e0806a','#d4748f'][i%5],deg=Math.max(8,Math.min(360,Math.round(360*(1-d/30))));return `<div class="ct" style="--k:${col}"><div class="ring" style="background:conic-gradient(var(--k) ${deg}deg,color-mix(in srgb,var(--k) 18%,transparent) 0)"><span>${n}</span></div><b>${esc(k)}</b><small>next in ${d===0?'today':d+' day'+(d===1?'':'s')}</small></div>`}).join('')}</div>`:''}`;
   }
   if(s.id==='work'){
     const now=new Date();now.setHours(0,0,0,0);
@@ -388,6 +399,7 @@ function card(s,c,ci,q){
   const empty=(c.f||[]).filter(f=>!f.v&&f.k!=='check').length;
   const checks=(c.f||[]).filter(f=>f.k==='check'),done=checks.filter(f=>f.v).length;
   const ordered=c.list?[...all.filter(x=>!x.f.v),...all.filter(x=>x.f.v)]:[...all.filter(x=>TODO.test(x.f.l||'')),...all.filter(x=>!TODO.test(x.f.l||''))];
+  if(c.calls&&!q)return `<section class="card" id="c-${s.id}-${ci}" style="--c:${esc(s.color)}"><div class="ch"><span class="ic">${icon(s.id)}</span><h3>${esc(c.t)}</h3><button class="ed" data-act="edit" data-s="${s.id}" data-c="${ci}">Edit</button></div><div class="cgrid">${(c.f||[]).filter(f=>f.v).map((f,i)=>`<a class="callt${i===0?' sos':''}" href="tel:${esc(tel(f.v))}"><b>${esc(f.l)}</b><span>${esc(f.v)}</span></a>`).join('')}</div>${c.n?`<p class="note" style="border:0;padding-top:4px">${esc(c.n)}</p>`:''}</section>`;
   const cnts=(c.f||[]).length&&(c.f||[]).every(f=>f.k==='count');
   if(cnts&&!q&&(OPEN.has(key)||c.open))return `<section class="card" id="c-${s.id}-${ci}" style="--c:${esc(s.color)}"><div class="ch" data-act="less" data-k="${esc(key)}" style="cursor:pointer"><span class="ic">${icon(s.id)}</span><h3>${esc(c.t)}</h3><span class="chev up">‹</span><button class="ed" data-act="edit" data-s="${s.id}" data-c="${ci}">Edit</button></div><div class="sgrid">${c.f.map((f,fi)=>{const n=+f.v||0,un=f.v===''||f.v==null,lo=LOW(f),pc=un?0:Math.min(100,Math.round(n/Math.max(1,(f.min??2)*3)*100)),col=PAL[fi%PAL.length];return `<div class="st${lo?' lo':''}" style="--s:${col}"><span class="sn">${esc(f.l)}</span><b>${un?'?':n}</b><i><u style="width:${pc}%"></u></i><span class="sb"><button class="pill cnt" data-act="cnt" data-d="-1" data-s="${s.id}" data-c="${ci}" data-f="${fi}" aria-label="One less ${esc(f.l)}">−</button><button class="pill cnt" data-act="cnt" data-d="1" data-s="${s.id}" data-c="${ci}" data-f="${fi}" aria-label="One more ${esc(f.l)}">+</button></span></div>`}).join('')}</div>${c.n?`<p class="note">${esc(c.n)}</p>`:''}</section>`;
   const fold=!q&&!c.open&&!c.list&&!checks.length&&!OPEN.has(key)&&(s.cards||[]).length>=5;
