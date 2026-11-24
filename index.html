@@ -262,6 +262,18 @@ body.p-christmas{--accent:#b8324a;--accentink:light-dark(#8e2340,#ec8a8f);--grad
 .sp-r>span{font-size:12px;font-weight:800;color:var(--mute);width:48px}
 .sp-r b{flex:1;font-size:15px;font-weight:800;min-width:0}.sp-r b small{display:block;font-size:12px;color:var(--mute)}
 .sp-r em{font-style:normal;font-weight:900}
+.ow-top{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.ow-top div{background:var(--soft);border-radius:14px;padding:10px 12px}
+.ow-top b{display:block;font-size:21px;font-weight:900}.ow-top small{font-size:12px;font-weight:700;color:var(--mute)}
+.ow-top .pos b,.ow-r em.pos{color:#2f9f73}.ow-top .neg b,.ow-r em.neg{color:#e0606f}
+.owf{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0 10px}
+.owf input,.owf select{font:inherit;font-size:16px;font-weight:700;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
+.owf select,.owf input[name=n],.owf button{grid-column:1/-1}
+.ow-r{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.ow-r b{flex:1;font-size:15px;font-weight:800;min-width:0}.ow-r b small{display:block;font-size:12px;color:var(--mute)}
+.ow-r em{font-style:normal;font-weight:900;font-size:16px}
+.rsub{margin:-2px 0 8px 14px;padding-left:10px;border-left:2px solid #e3dccf;font-size:12.5px;color:#6b6358}
+.rsub div{display:flex;gap:6px;align-items:baseline;margin:3px 0}.rsub i{flex:1;border-bottom:1px dotted #d6cfc2;transform:translateY(-3px)}.rsub b{font-weight:700}
 .grp{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:22px 4px 10px}
 .card.fold{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:var(--ink);padding:16px 18px;margin-bottom:10px;cursor:pointer}
 .card.fold .ic{width:22px;height:22px;flex:none;color:var(--c)}
@@ -662,6 +674,7 @@ function layoutHtml(s,sv){
       if(it==='receipt'){inner+=receiptHtml(s);continue}
       if(it==='goal'){inner+=goalHtml(s);continue}
       if(it==='spend'){inner+=spendHtml(s);continue}
+      if(it==='owes'){inner+=owesHtml(s);continue}
       const [k,...r]=it.split(':'),t=r.join(':');
       if(k==='card'){const ci=cards.findIndex(c=>c.t===t);if(ci>=0){used.add(ci);inner+=card(s,cards[ci],ci)}}
       else if(k==='chart'){const c=ch.find(c=>c.t===t);if(c)inner+=chartHtml(c)}
@@ -679,9 +692,9 @@ function receiptHtml(s){
     ${ln('Pay in','+ '+eur(p.pay),'in')}
     <div class="rs">Rent split</div><div class="seg rseg">${b('half','50/50')}${b('eoin','Eóin pays '+eur(p.eoin))}${b('custom','Other')}</div>
     ${p.mode==='custom'?`<label class="cust">Your share <input data-rent type="number" inputmode="numeric" min="0" step="10" value="${esc(String(p.custom||''))}"></label>`:''}
-    ${ln('Rent and house bills','− '+eur(k.rent))}${ln('Bills','− '+eur(k.bills))}${ln('Spending (about '+eur(p.spend*12/52)+' a week)','− '+eur(p.spend))}${p.pot?ln(esc(p.potLabel||'Pot'),'− '+eur(p.pot)):''}
-    <div class="rtot${k.save<0?' bad':''}"><span>${k.save<0?'SHORT BY':'INTO SAVINGS'}</span><b>${eur(Math.abs(k.save))}</b></div>
-    <p class="rthx">*** every month, on payday ***</p></section>`;
+    ${ln('Rent and house bills','− '+eur(k.rent))}${ln('Bills','− '+eur(k.bills))}${ln('Spending (about '+eur(p.spend*12/52)+' a week)','− '+eur(p.spend))}${p.cats?`<div class="rsub">${Object.entries(p.cats).map(([k,v])=>`<div><span>${esc(k)}</span><i></i><b>${eur(v)}</b></div>`).join('')}</div>`:''}${p.pot?ln(esc(p.potLabel||'Pot'),'− '+eur(p.pot)):''}
+    <div class="rtot${k.save<0?' bad':''}"><span>${k.save<0?'SHORT BY':p.pot?'LEFT OVER':'INTO SAVINGS'}</span><b>${eur(Math.abs(k.save))}</b></div>
+    <p class="rthx">${p.pot?`*** ${eur(p.pot)} a month builds up in the pot ***`:'*** every month, on payday ***'}</p></section>`;
 }
 function goalHtml(s){
   const c=(s.cards||[]).find(c=>/^savings$/i.test(c.t));if(!c)return '';
@@ -708,6 +721,18 @@ function spendHtml(s){
     ${Object.keys(cats).map(k=>bar(k,by[k]||0,cats[k])).join('')}
     ${recent.length?`<h4 class="sp-h">Latest</h4>${recent.map(x=>`<div class="sp-r"><span>${fmt(new Date(x.d))}</span><b>${esc(x.n||x.c)}<small>${esc(x.c)}</small></b><em>${e2(x.a)}</em><button class="pill del" data-act="sprm" data-i="${x.i}" aria-label="Remove">×</button></div>`).join('')}`:'<p class="note">Nothing logged yet this month. Add what you spend as you go.</p>'}
   </section>`;
+}
+function owesHtml(s){
+  const L=(s.owes||[]).map((x,i)=>({...x,i})),them=L.filter(x=>x.dir==='them'),me=L.filter(x=>x.dir!=='them');
+  const e2=v=>'€'+(+v).toLocaleString('en-GB',{minimumFractionDigits:v%1?2:0,maximumFractionDigits:2});
+  const tot=a=>a.reduce((t,x)=>t+(+x.a||0),0);
+  const row=x=>`<div class="ow-r"><b>${esc(x.who)}<small>${esc(x.n||'')}${x.n?' · ':''}${fmt(new Date(x.d))}</small></b><em class="${x.dir==='them'?'pos':'neg'}">${e2(x.a)}</em><button class="pill" data-act="owerm" data-i="${x.i}">Settled</button></div>`;
+  return `<section class="card owes" style="--c:${esc(s.color)}"><div class="ch"><span class="ic">${icon(s.id)}</span><h3>Who owes who</h3></div>
+    <div class="ow-top"><div class="pos"><b>${e2(tot(them))}</b><small>owed to you</small></div><div class="neg"><b>${e2(tot(me))}</b><small>you owe</small></div></div>
+    <form class="owf" data-owe="1"><select name="dir" aria-label="Direction"><option value="them">They owe me</option><option value="me">I owe them</option></select><input name="who" placeholder="Who" required autocomplete="off" aria-label="Who"><input name="a" type="number" inputmode="decimal" step="0.01" min="0" placeholder="€" required aria-label="Amount"><input name="n" placeholder="What for? (optional)" autocomplete="off" aria-label="Note"><button class="pill go" type="submit">Add</button></form>
+    ${them.length?`<h4 class="sp-h">Owed to you</h4>${them.map(row).join('')}`:''}
+    ${me.length?`<h4 class="sp-h">You owe</h4>${me.map(row).join('')}`:''}
+    ${!L.length?'<p class="note">All square. Add anyone who owes you, or anyone you owe.</p>':''}</section>`;
 }
 function planCalc(s){
   const p=s.plan,bc=(s.charts||[]).find(c=>/monthly bills/i.test(c.t));
@@ -883,6 +908,7 @@ main.addEventListener('click',async e=>{
     return}
   if(a==='clear'){const [s,c]=b.dataset.k.split('/');const cards=JSON.parse(JSON.stringify(S.secs[s].cards));cards[+c].f=cards[+c].f.filter(f=>!(f.k==='check'&&f.v));S.secs[s].cards=cards;render();await save(s,cards);return}
   if(a==='rent'){setPlan(tab(),{mode:b.dataset.m});return}
+  if(a==='owerm'){const sec=S.secs[tab()];const L=(sec.owes||[]).slice();L.splice(+b.dataset.i,1);sec.owes=L;render();await save(tab(),sec.cards,{owes:L});return}
   if(a==='sprm'){const sec=S.secs[tab()];const L=(sec.spends||[]).slice();L.splice(+b.dataset.i,1);sec.spends=L;render();await save(tab(),sec.cards,{spends:L});return}
   if(a==='more'||a==='less'){const k=b.dataset.k;if(a==='more')OPEN.add(k);else OPEN.delete(k);render();return}
   if(a==='copy'){
@@ -909,6 +935,7 @@ main.addEventListener('click',async e=>{
     }else{b.dataset.sure=1;b.textContent='Tap again to delete'}
   }
 });
+main.addEventListener('submit',async e=>{const f=e.target.closest('[data-owe]');if(!f)return;e.preventDefault();e.stopImmediatePropagation();const a=Math.round(parseFloat(f.a.value)*100)/100,who=f.who.value.trim();if(!(a>0)||!who)return;const sec=S.secs[tab()],t=new Date(),d=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');const L=(sec.owes||[]).concat([{d,a,who,dir:f.dir.value,n:f.n.value.trim()}]);sec.owes=L;render();await save(tab(),sec.cards,{owes:L})});
 main.addEventListener('submit',async e=>{const f=e.target.closest('[data-spend]');if(!f)return;e.preventDefault();e.stopImmediatePropagation();const a=Math.round(parseFloat(f.a.value)*100)/100;if(!(a>0))return;const sec=S.secs[tab()],t=new Date(),d=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');const L=(sec.spends||[]).concat([{d,a,c:f.c.value,n:f.n.value.trim()}]);sec.spends=L;render();await save(tab(),sec.cards,{spends:L})});
 main.addEventListener('change',e=>{const i=e.target.closest('[data-rent]');if(i)setPlan(tab(),{custom:Math.max(0,Math.round(+i.value||0))})});
 main.addEventListener('submit',async e=>{
