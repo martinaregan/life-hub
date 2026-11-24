@@ -194,6 +194,28 @@ main{padding-top:6px;padding-bottom:110px}
 .code .ct b{color:#e6edf3}.code .ct small{color:#8b949e}
 .code .ct .ring span{background:#0d1117}
 .code .grp{font-family:ui-monospace,Menlo,monospace;color:#8b949e}
+.rcpt{position:relative;margin:4px 0 22px;padding:20px 20px 26px;background:#fbf8f1;color:#2a2622;border-radius:6px 6px 0 0;font:600 14px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;box-shadow:var(--shadow)}
+.rcpt:after{content:"";position:absolute;left:0;right:0;bottom:-12px;height:12px;background:linear-gradient(-45deg,transparent 8px,#fbf8f1 0) 0 0/16px 12px,linear-gradient(45deg,transparent 8px,#fbf8f1 0) 0 0/16px 12px}
+.rh{text-align:center;border-bottom:2px dashed #c9c1b3;padding-bottom:12px;margin-bottom:12px}
+.rh b{display:block;font-size:17px;letter-spacing:.14em}.rh small{display:block;font-size:11px;color:#8a8175;letter-spacing:.1em}
+.rl{display:flex;align-items:baseline;gap:6px;margin:7px 0}
+.rl span{flex:none;max-width:62%}.rl i{flex:1;border-bottom:2px dotted #c9c1b3;transform:translateY(-4px)}.rl b{flex:none;font-weight:800}
+.rl.in b{color:#2f6b55}
+.rs{margin:12px 0 4px;font-size:11px;letter-spacing:.12em;color:#8a8175;text-transform:uppercase}
+.rseg{margin:0 0 8px}.rseg button{font-family:inherit;font-size:12.5px;padding:7px 11px;color:#2a2622;border-color:#c9c1b3}
+.rseg button[aria-pressed=true]{background:#2a2622;color:#fbf8f1}
+.rcpt .cust{color:#8a8175}.rcpt .cust input{color:#2a2622;border-color:#c9c1b3}
+.rtot{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;padding-top:12px;border-top:2px dashed #c9c1b3}
+.rtot span{font-size:13px;letter-spacing:.14em;font-weight:800}.rtot b{font-size:30px;font-weight:900;color:#2f6b55}
+.rtot.bad b{color:#b8324a}
+.rthx{margin:12px 0 0;text-align:center;font-size:11px;color:#8a8175;letter-spacing:.08em}
+.goal{display:block;text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:22px;padding:16px 18px;margin-bottom:16px}
+.goal .gt{display:flex;justify-content:space-between;align-items:baseline}
+.goal .gt span{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.goal .gt b{font-size:22px;font-weight:900}.goal .gt small{font-size:14px;color:var(--mute)}
+.goal .gb{height:12px;border-radius:99px;background:var(--soft);margin:10px 0 8px;overflow:hidden}
+.goal .gb u{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#5fc9a8,#2f8f6b)}
+.goal>small{font-size:13px;font-weight:700;color:var(--mute)}
 .grp{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:22px 4px 10px}
 .card.fold{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:var(--ink);padding:16px 18px;margin-bottom:10px;cursor:pointer}
 .card.fold .ic{width:22px;height:22px;flex:none;color:var(--c)}
@@ -589,14 +611,36 @@ function layoutHtml(s,sv){
     let inner='';
     for(const it of g.items||[]){
       if(it==='plan'){inner+=planHtml(s);continue}
+      if(it==='receipt'){inner+=receiptHtml(s);continue}
+      if(it==='goal'){inner+=goalHtml(s);continue}
       const [k,...r]=it.split(':'),t=r.join(':');
       if(k==='card'){const ci=cards.findIndex(c=>c.t===t);if(ci>=0){used.add(ci);inner+=card(s,cards[ci],ci)}}
       else if(k==='chart'){const c=ch.find(c=>c.t===t);if(c)inner+=chartHtml(c)}
     }
-    if(inner)h+=`<h4 class="grp">${esc(g.g)}</h4>`+inner;
+    if(inner)h+=(g.g?`<h4 class="grp">${esc(g.g)}</h4>`:'')+inner;
   }
   const rest=cards.map((c,ci)=>used.has(ci)?'':card(s,c,ci)).join('');
   return h+(rest?`<h4 class="grp">More</h4>${rest}`:'');
+}
+function receiptHtml(s){
+  const p=s.plan,k=planCalc(s),b=(m,t)=>`<button type="button" data-act="rent" data-m="${m}" aria-pressed="${p.mode===m||(m==='half'&&!p.mode)?'true':'false'}">${t}</button>`;
+  const ln=(l,v,cls)=>`<div class="rl ${cls||''}"><span>${l}</span><i></i><b>${v}</b></div>`;
+  const now=new Date();
+  return `<section class="rcpt"><div class="rh"><b>PAYDAY RECEIPT</b><small>${MON[now.getMonth()].toUpperCase()} ${now.getFullYear()} · MARTINA</small></div>
+    ${ln('Pay in','+ '+eur(p.pay),'in')}
+    <div class="rs">Rent split</div><div class="seg rseg">${b('half','50/50')}${b('eoin','Eóin pays '+eur(p.eoin))}${b('custom','Other')}</div>
+    ${p.mode==='custom'?`<label class="cust">Your share <input data-rent type="number" inputmode="numeric" min="0" step="10" value="${esc(String(p.custom||''))}"></label>`:''}
+    ${ln('Rent and house bills','− '+eur(k.rent))}${ln('Bills','− '+eur(k.bills))}${ln('Spending (about '+eur(p.spend*12/52)+' a week)','− '+eur(p.spend))}${p.pot?ln(esc(p.potLabel||'Pot'),'− '+eur(p.pot)):''}
+    <div class="rtot${k.save<0?' bad':''}"><span>${k.save<0?'SHORT BY':'INTO SAVINGS'}</span><b>${eur(Math.abs(k.save))}</b></div>
+    <p class="rthx">*** every month, on payday ***</p></section>`;
+}
+function goalHtml(s){
+  const c=(s.cards||[]).find(c=>/^savings$/i.test(c.t));if(!c)return '';
+  const num=re=>{const f=(c.f||[]).find(f=>re.test(f.l));return f?+(f.v.match(/€([\d,]+)/)||[,'0'])[1].replace(/,/g,''):0};
+  const have=num(/now/i),goal=num(/goal/i),k=planCalc(s),pc=goal?Math.min(100,Math.round(have/goal*100)):0;
+  const mths=k.save>0&&goal>have?Math.ceil((goal-have)/k.save):0,when=new Date();when.setMonth(when.getMonth()+mths);
+  const ci=(s.cards||[]).indexOf(c);
+  return `<a class="goal" href="#money/${ci}"><div class="gt"><span>Safety net</span><b>${eur(have)} <small>of ${eur(goal)}</small></b></div><div class="gb"><u style="width:${pc}%"></u></div><small>${goal<=have?'Done. Nice.':mths?`About ${MON[when.getMonth()]} ${when.getFullYear()} at ${eur(k.save)} a month, sooner with the calf money`:'Not moving at this rent split'}</small></a>`;
 }
 function planCalc(s){
   const p=s.plan,bc=(s.charts||[]).find(c=>/monthly bills/i.test(c.t));
@@ -672,7 +716,7 @@ function render(){
   {const k=decodeURIComponent(location.hash.slice(1)).split('/')[1];if(k!==undefined)OPEN.add(s.id+'/'+k)}
   const cards=s.cards||[],sv=planView(s);main.className='wrap'+(s.id==='christmas'?' xmas':s.id==='study'?' code':'');
   main.innerHTML=`<h2 class="pg">${esc(s.title)}</h2>${s.blurb?`<p class="lede">${esc(s.blurb)}</p>`:'<div style="height:12px"></div>'}
-    ${s.id==='todo'?weekStrip():summary(sv)}
+    ${s.id==='todo'?weekStrip():s.layout&&JSON.stringify(s.layout).includes('receipt')?'':summary(sv)}
     ${s.id==='study'?canvasCard(s):''}
     ${s.layout?layoutHtml(s,sv):planHtml(s)}
     ${s.layout?'':s.charts&&s.charts.length?cards.map((c,ci)=>c.open?card(s,c,ci):'').join(''):''}
