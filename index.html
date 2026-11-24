@@ -528,6 +528,21 @@ function canvasSummary(){
 const PAL=['#d4748f','#8c7a9e','#e8a7b9','#b4526f','#c9b8a8','#6f9a8a','#e0a46a'];
 const eur=v=>'€'+Math.round(v).toLocaleString('en-GB');
 
+function layoutHtml(s,sv){
+  const cards=s.cards||[],used=new Set(),ch=sv.charts||[];let h='';
+  for(const g of s.layout){
+    let inner='';
+    for(const it of g.items||[]){
+      if(it==='plan'){inner+=planHtml(s);continue}
+      const [k,...r]=it.split(':'),t=r.join(':');
+      if(k==='card'){const ci=cards.findIndex(c=>c.t===t);if(ci>=0){used.add(ci);inner+=card(s,cards[ci],ci)}}
+      else if(k==='chart'){const c=ch.find(c=>c.t===t);if(c)inner+=chartHtml(c)}
+    }
+    if(inner)h+=`<h4 class="grp">${esc(g.g)}</h4>`+inner;
+  }
+  const rest=cards.map((c,ci)=>used.has(ci)?'':card(s,c,ci)).join('');
+  return h+(rest?`<h4 class="grp">More</h4>${rest}`:'');
+}
 function planCalc(s){
   const p=s.plan,bc=(s.charts||[]).find(c=>/monthly bills/i.test(c.t));
   const bills=bc?bc.items.reduce((a,x)=>a+(+x.v||0),0):(+p.bills||0);
@@ -604,10 +619,10 @@ function render(){
   main.innerHTML=`<h2 class="pg">${esc(s.title)}</h2>${s.blurb?`<p class="lede">${esc(s.blurb)}</p>`:'<div style="height:12px"></div>'}
     ${s.id==='todo'?weekStrip():summary(sv)}
     ${s.id==='study'?canvasCard(s):''}
-    ${planHtml(s)}
-    ${s.charts&&s.charts.length?cards.map((c,ci)=>c.open?card(s,c,ci):'').join(''):''}
-    ${(sv.charts||[]).map(chartHtml).join('')}
-    ${cards.map((c,ci)=>s.charts&&s.charts.length&&c.open?'':(c.g&&c.g!==(cards[ci-1]||{}).g?`<h4 class="grp">${esc(c.g)}</h4>`:'')+card(s,c,ci)).join('')}
+    ${s.layout?layoutHtml(s,sv):planHtml(s)}
+    ${s.layout?'':s.charts&&s.charts.length?cards.map((c,ci)=>c.open?card(s,c,ci):'').join(''):''}
+    ${s.layout?'':(sv.charts||[]).map(chartHtml).join('')}
+    ${s.layout?'':cards.map((c,ci)=>s.charts&&s.charts.length&&c.open?'':(c.g&&c.g!==(cards[ci-1]||{}).g?`<h4 class="grp">${esc(c.g)}</h4>`:'')+card(s,c,ci)).join('')}
     ${S.edit&&S.edit.s===s.id&&S.edit.c===-1?editForm(s,S.edit.draft):''}`;
   const ci=decodeURIComponent(location.hash.slice(1)).split('/')[1];
   if(ci!==undefined){const el=document.getElementById(`c-${s.id}-${ci}`);if(el){el.scrollIntoView({block:'start'});el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1600)}}
