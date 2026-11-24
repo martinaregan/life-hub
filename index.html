@@ -283,6 +283,22 @@ function summary(s){
     return `<section class="hero"><p class="kick">${esc(s.statsNote||kick)}</p><div class="big">${esc(m.v)}</div><div class="lbl">${esc(m.l)}${m.s?' · '+esc(m.s):''}</div>
       ${rest.length?`<div class="stats3">${rest.slice(0,3).map(x=>`<div><b>${esc(x.v)}</b>${esc(x.l)}${x.s?'<br>'+esc(x.s):''}</div>`).join('')}</div>`:''}</section>`;
   }
+  if(s.id==='emergency'){
+    const cs=s.cards||[],stock=cs.find(c=>/stock/i.test(c.t)),sf=stock?(stock.f||[]).filter(f=>f.k==='count'):[];
+    const counted=sf.filter(f=>f.v!==''&&f.v!=null),low=sf.filter(LOW);
+    const dt=secDates(s,400),nx=dt[0];
+    const find=re=>{for(const c of cs)for(const f of c.f||[])if(f.k==='date'&&re.test(c.t+' '+f.l)){const n=nextDate(f.v);if(n&&n.days>=0)return n}return null};
+    const cl=find(/gavin|claire/i),ins=find(/insurance|switch/i);
+    const ago=n=>n.days<60?n.days+' days':Math.round(n.days/30.4)+' months';
+    const LINES=['Spare infusion set in the bag? Good.','Sensor warm-up: the longest two hours in medicine.','Your pump has more alarms than a fire station.','Pack the hypo snacks. Then pack more hypo snacks.','Drink some water. Your future self says thanks.','Book the dentist. Yes, you.','If the pump beeps and nobody’s around, it still beeps.','Medical admin is a side quest nobody asked for.','Sleep counts as healthcare. Allegedly.','Reorder before you’re down to the last one. Every time.'];
+    const now=new Date(),line=LINES[Math.floor(now/864e5)%LINES.length];
+    const big=nx?(nx.days===0?'Today':nx.days+' days'):'All good',lbl=nx?`${esc(nx.label)} · ${esc(nx.card)}`:'Nothing coming up';
+    const st=!sf.length?'':!counted.length?'Not counted':low.length?low.length+' low':'All stocked';
+    const td=secTodos(s);
+    return `<section class="hero" style="background:linear-gradient(135deg,#f08aa6 0%,#d9577f 50%,#8e4fc0 100%)"><p class="kick">Next up</p><div class="big">${big}</div><div class="lbl">${lbl}</div>
+      <div class="stats3">${st?`<div><b>${st}</b>health stock</div>`:''}${cl?`<div><b>${ago(cl)}</b>until Claire</div>`:''}${ins&&!(nx&&nx.days===ins.days)?`<div><b>${ago(ins)}</b>to switch insurer</div>`:''}</div>
+      <p class="quip">“${esc(line)}”</p></section>${td.length?`<section class="sum"><p class="kick">To sort</p>${td.map(x=>`<a class="srow warn" href="${link(s.id,x.ci)}"><b>${esc(x.text)}<small>${esc(x.card)}</small></b><span class="r">›</span></a>`).join('')}</section>`:''}`;
+  }
   if(s.id==='study'){
     const it=(CV.items||[]).filter(a=>!a.done&&daysTo(a.due)>=0).sort((a,b)=>new Date(a.due)-new Date(b.due));
     const nx=it[0],wk=it.filter(a=>daysTo(a.due)<=7).length,two=it.filter(a=>daysTo(a.due)<=14).length;
