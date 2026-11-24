@@ -144,11 +144,15 @@ main{padding-top:6px;padding-bottom:110px}
 .snow.s2{background-size:260px 160px;opacity:.45;animation-duration:14s}
 @keyframes snow{to{transform:translateY(100px)}}
 @media (prefers-reduced-motion:reduce){.snow{animation:none}}
-.xmas .card{border-top:4px solid #c94f6d}
+.xmas{--accent:#b8324a;--accentink:#e2675f}
+.xmas .card{--c:#b8324a!important;border-top:4px solid #b8324a}
+.xmas .more,.xmas .ed{color:#d9a441}
+.xmas .pill.go{background:#2f6b55;color:#fff}
+.xmas .srow.warn{background:color-mix(in srgb,#2f6b55 25%,transparent)}
 .xmas .card:nth-of-type(even){border-top-color:#2f6b55}
-.xmas .card .ic svg{stroke:#c94f6d}
+.xmas .card .ic svg{stroke:#d9a441;fill:color-mix(in srgb,#d9a441 20%,transparent)}
 .xmas .tick.on .bx{background:#2f6b55;border-color:#2f6b55}
-.xmas .pg:after{content:" \2744";color:#c94f6d}
+.xmas .pg:after{content:" \2744";color:#d9a441}
 .giftc{margin:2px 0 0 34px;font-size:14px;font-weight:800;color:var(--mute)}
 .gifts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
 .gift{font:inherit;color:var(--ink);background:var(--soft);border:2px dashed var(--line);border-radius:18px;padding:12px 6px 10px;text-align:center;cursor:pointer;touch-action:manipulation}
@@ -460,7 +464,7 @@ function card(s,c,ci,q){
     ${vis.length?`<div class="rows">${vis.map(({f,fi})=>`<div class="r1${TODO.test(f.l||'')?' todo':''}">${val(f,ci,fi,s.id,q)}</div>`).join('')}</div>`:''}
     ${!open?`<button class="more" data-act="more" data-k="${esc(key)}">Show ${ordered.length-vis.length} more</button>`:''}
     ${open&&!c.open&&!checks.length&&(ordered.length>SHOW+1||big)&&!q?`<button class="more" data-act="less" data-k="${esc(key)}">${big?'Close':'Show less'}</button>`:''}
-    ${c.list&&!q?`<form class="qa" data-add="${s.id}/${ci}"><input name="it" placeholder="Add ${/shop/i.test(c.t)?'an item':'a thing to do'}" autocomplete="off" aria-label="Add"><button class="pill go" type="submit">Add</button></form>${done?`<button class="more" data-act="clear" data-k="${s.id}/${ci}">Clear ${done} ticked</button>`:''}`:''}
+    ${c.list&&!q?`<form class="qa" data-add="${s.id}/${ci}"><input name="it" placeholder="Add ${s.id==='todo'&&!/shop/i.test(c.t)?'a thing to do':'an item'}" autocomplete="off" aria-label="Add"><button class="pill go" type="submit">Add</button></form>${done?`<button class="more" data-act="clear" data-k="${s.id}/${ci}">Clear ${done} ticked</button>`:''}`:''}
     ${open&&c.n?`<p class="note">${hl(c.n,q)}</p>`:''}
     ${open&&empty&&!q?`<p class="note" style="font-style:italic">${empty} empty field${empty>1?'s':''}, tap Edit to fill in</p>`:''}
   </article>`;
