@@ -261,12 +261,6 @@ function summary(s){
       <div class="stats3"><div><b>${fmt(fly.d)}</b>Fly home</div>${back?`<div><b>${fmt(back.d)}</b>Fly back</div>`:''}${pres?`<div><b>${pres[0]}/${pres[1]}</b>Presents bought</div>`:''}</div></section>`;
   }
   const td=secTodos(s),dt=secDates(s,120);
-  if(s.id==='emergency'){
-    const ph=c=>((c&&c.f)||[]).filter(f=>f.v&&phone(f.v,f.l));
-    const a=ph((s.cards||[])[0]),b=ph((s.cards||[])[1]);
-    const nums=[a[0],b[0],a[1],a[2]].filter(Boolean);
-    if(nums.length)return `<section class="sum"><p class="kick" style="margin-bottom:6px">In an emergency</p>${nums.map(f=>`<a class="srow" href="tel:${esc(tel(f.v))}"><b>${esc(f.l)}<small>${esc(f.v)}</small></b><span class="pill go">Call</span></a>`).join('')}</section>`;
-  }
   if(!td.length&&!dt.length)return '';
   const head=td.length?`${td.length} thing${td.length>1?'s':''} to sort`:dt[0].days<=14?`${esc(dt[0].card)} ${dt[0].days<=1?inTxt(dt[0].days).toLowerCase():'in '+inTxt(dt[0].days)}`:'Nothing to sort';
   return `<section class="sum"><p class="kick">${kick}</p><h2>${head}</h2>
@@ -298,7 +292,7 @@ function card(s,c,ci,q){
   const empty=(c.f||[]).filter(f=>!f.v&&f.k!=='check').length;
   const checks=(c.f||[]).filter(f=>f.k==='check'),done=checks.filter(f=>f.v).length;
   const ordered=c.list?[...all.filter(x=>!x.f.v),...all.filter(x=>x.f.v)]:[...all.filter(x=>TODO.test(x.f.l||'')),...all.filter(x=>!TODO.test(x.f.l||''))];
-  const open=!!q||OPEN.has(key)||checks.length>0||c.list||ordered.length<=SHOW+1;
+  const open=!!q||c.open||OPEN.has(key)||checks.length>0||c.list||ordered.length<=SHOW+1;
   const vis=open?ordered:ordered.slice(0,SHOW);
   const hidden=ordered.length-vis.length+(c.n&&!open?1:0);
   return `<article class="card${open?'':' closed'}" id="c-${s.id}-${ci}" style="--c:${esc(s.color)}">
