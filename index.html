@@ -216,6 +216,12 @@ main{padding-top:6px;padding-bottom:110px}
 .goal .gb{height:12px;border-radius:99px;background:var(--soft);margin:10px 0 8px;overflow:hidden}
 .goal .gb u{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#5fc9a8,#2f8f6b)}
 .goal>small{font-size:13px;font-weight:700;color:var(--mute)}
+body.p-todo{--accent:#8a6cf0;--accentink:light-dark(#6a4fd0,#b3a0ff);--grad:linear-gradient(135deg,#a891ff 0%,#8a6cf0 55%,#6a4fd0 100%)}
+body.p-money{--accent:#2f9f73;--accentink:light-dark(#1f7a56,#6fd6a8);--grad:linear-gradient(135deg,#5cc79a 0%,#2f9f73 55%,#1f7a56 100%)}
+body.p-emergency{--accent:#e0606f;--accentink:light-dark(#b8404f,#f59aa4);--grad:linear-gradient(135deg,#f08a96 0%,#e0606f 55%,#b8404f 100%)}
+body.p-study{--accent:#4f8cf0;--accentink:light-dark(#2f63c0,#93b9ff);--grad:linear-gradient(135deg,#7aa6ff 0%,#4f8cf0 55%,#2f63c0 100%)}
+body.p-work{--accent:#d99a2b;--accentink:light-dark(#a8741a,#f2c674);--grad:linear-gradient(135deg,#efb54a 0%,#d99a2b 55%,#a8741a 100%)}
+body.p-christmas{--accent:#b8324a;--accentink:light-dark(#8e2340,#ec8a8f);--grad:linear-gradient(135deg,#d9577f 0%,#b8324a 55%,#1f5a45 100%)}
 .grp{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:22px 4px 10px}
 .card.fold{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:var(--ink);padding:16px 18px;margin-bottom:10px;cursor:pointer}
 .card.fold .ic{width:22px;height:22px;flex:none;color:var(--c)}
@@ -714,7 +720,7 @@ function render(){
   const s=secs.find(x=>x.id===t);
   if(!s){location.hash=secs[0].id;return}
   {const k=decodeURIComponent(location.hash.slice(1)).split('/')[1];if(k!==undefined)OPEN.add(s.id+'/'+k)}
-  const cards=s.cards||[],sv=planView(s);main.className='wrap'+(s.id==='christmas'?' xmas':s.id==='study'?' code':'');
+  const cards=s.cards||[],sv=planView(s);main.className='wrap'+(s.id==='christmas'?' xmas':s.id==='study'?' code':'');document.body.className='p-'+s.id;
   main.innerHTML=`<h2 class="pg">${esc(s.title)}</h2>${s.blurb?`<p class="lede">${esc(s.blurb)}</p>`:'<div style="height:12px"></div>'}
     ${s.id==='todo'?weekStrip():s.layout&&JSON.stringify(s.layout).includes('receipt')?'':summary(sv)}
     ${s.id==='study'?canvasCard(s):''}
