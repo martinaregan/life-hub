@@ -72,6 +72,18 @@ main{padding-top:6px;padding-bottom:110px}
 .ch .ic{width:22px;height:22px;flex:none;color:var(--c)}
 .ch .ic svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .ch h3{flex:1;margin:0;font-size:19px;font-weight:900;letter-spacing:-.01em;color:var(--ink)}
+.card.plan .sub{margin:2px 0 0 34px;font-size:14px;font-weight:700;color:var(--mute)}
+.seg{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 6px}
+.seg button{font:inherit;font-size:14px;font-weight:800;padding:10px 14px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;touch-action:manipulation}
+.seg button[aria-pressed=true]{background:var(--c);border-color:transparent;color:#fff}
+.cust{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:14px;font-weight:800;color:var(--mute)}
+.cust input{flex:1;font:inherit;font-size:17px;font-weight:800;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.res{display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;padding:14px 16px;border-radius:16px;background:var(--soft)}
+.res span{font-size:14px;font-weight:800;color:var(--mute)}
+.res b{font-size:24px;font-weight:900}
+.res small{font-size:13px;color:var(--mute)}
+.res.bad{background:var(--warn);color:var(--warnink)}
+.res.bad span,.res.bad small{color:inherit}
 .grp{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:22px 4px 10px}
 .card.fold{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:var(--ink);padding:16px 18px;margin-bottom:10px;cursor:pointer}
 .card.fold .ic{width:22px;height:22px;flex:none;color:var(--c)}
@@ -400,6 +412,36 @@ function canvasSummary(){
 /* ---- charts stored on a section as charts:[{t,s,type,items,n}] ---- */
 const PAL=['#d4748f','#8c7a9e','#e8a7b9','#b4526f','#c9b8a8','#6f9a8a','#e0a46a'];
 const eur=v=>'€'+Math.round(v).toLocaleString('en-GB');
+
+function planCalc(s){
+  const p=s.plan,bc=(s.charts||[]).find(c=>/monthly bills/i.test(c.t));
+  const bills=bc?bc.items.reduce((a,x)=>a+(+x.v||0),0):(+p.bills||0);
+  const half=Math.round(p.rentTotal/2),eo=p.rentTotal-p.eoin;
+  const rent=p.mode==='eoin'?eo:p.mode==='custom'?(+p.custom||0):half;
+  const label=p.mode==='eoin'?'Eóin pays '+eur(p.eoin):p.mode==='custom'?'your share '+eur(rent):'rent 50/50';
+  return {rent,bills,half,eo,label,save:p.pay-rent-bills-p.spend-(+p.pot||0)};
+}
+function planView(s){
+  if(!s.plan)return s;const k=planCalc(s);
+  const stats=(s.stats||[]).map(x=>/^rent/i.test(x.l)?{...x,v:eur(k.rent),s:k.label}:/^bills/i.test(x.l)?{...x,v:eur(k.bills)}:x);
+  const charts=(s.charts||[]).map(c=>/where your pay goes/i.test(c.t)?{...c,s:'Each month, '+k.label+'. Savings is what’s left',items:[{l:'Rent and house bills',v:k.rent},{l:'Spending budget',v:s.plan.spend},{l:'Bills',v:k.bills},{l:'Savings',v:Math.max(k.save,0)}].concat(s.plan.pot?[{l:s.plan.potLabel||'Pot',v:s.plan.pot}]:[])}:c);
+  return {...s,stats,charts,statsNote:k.label.charAt(0).toUpperCase()+k.label.slice(1)+', pots set aside first'};
+}
+function planHtml(s){
+  if(!s.plan)return '';const p=s.plan,k=planCalc(s);
+  const b=(m,t)=>`<button type="button" data-act="rent" data-m="${m}" aria-pressed="${p.mode===m||(m==='half'&&!p.mode)?'true':'false'}">${t}</button>`;
+  const row=(l,v,neg)=>`<div class="r1"><div class="tx"><small>${l}</small><b>${neg?'− ':''}${eur(v)}</b></div></div>`;
+  return `<section class="card plan" style="--c:${esc(s.color)}"><div class="ch"><span class="ic">${icon(s.id)}</span><h3>Rent split</h3></div>
+    <p class="sub">Pick how rent is split and the rest works itself out</p>
+    <div class="seg">${b('half','50/50 · '+eur(k.half))}${b('eoin','Eóin pays '+eur(p.eoin)+' · '+eur(k.eo))}${b('custom','Other amount')}</div>
+    ${p.mode==='custom'?`<label class="cust">Your share of the rent <input data-rent type="number" inputmode="numeric" min="0" step="10" value="${esc(String(p.custom||''))}"></label>`:''}
+    <div class="rows">${row('Take-home pay',p.pay)}${row('Rent',k.rent,1)}${row('Bills',k.bills,1)}${row('Spending budget',p.spend,1)}${p.pot?row(esc(p.potLabel||'Pot'),p.pot,1):''}</div>
+    <div class="res${k.save<0?' bad':''}"><span>${k.save<0?'Short by':'Into savings'}</span><b>${eur(Math.abs(k.save))}<small> a month</small></b></div></section>`;
+}
+async function setPlan(sid,ch){
+  const sec=S.secs[sid];sec.plan=Object.assign({},sec.plan,ch);render();
+  await save(sid,sec.cards,{plan:sec.plan});
+}
 function chartHtml(c){
   const it=(c.items||[]).filter(x=>x&&typeof x.v==='number');if(!it.length)return '';
   let body='';
@@ -441,12 +483,13 @@ function render(){
   const s=secs.find(x=>x.id===t);
   if(!s){location.hash=secs[0].id;return}
   {const k=decodeURIComponent(location.hash.slice(1)).split('/')[1];if(k!==undefined)OPEN.add(s.id+'/'+k)}
-  const cards=s.cards||[];
+  const cards=s.cards||[],sv=planView(s);
   main.innerHTML=`<h2 class="pg">${esc(s.title)}</h2>${s.blurb?`<p class="lede">${esc(s.blurb)}</p>`:'<div style="height:12px"></div>'}
-    ${s.id==='todo'?weekStrip():summary(s)}
+    ${s.id==='todo'?weekStrip():summary(sv)}
     ${s.id==='study'?canvasCard(s):''}
+    ${planHtml(s)}
     ${s.charts&&s.charts.length?cards.map((c,ci)=>c.open?card(s,c,ci):'').join(''):''}
-    ${(s.charts||[]).map(chartHtml).join('')}
+    ${(sv.charts||[]).map(chartHtml).join('')}
     ${cards.map((c,ci)=>s.charts&&s.charts.length&&c.open?'':(c.g&&c.g!==(cards[ci-1]||{}).g?`<h4 class="grp">${esc(c.g)}</h4>`:'')+card(s,c,ci)).join('')}
     ${S.edit&&S.edit.s===s.id&&S.edit.c===-1?editForm(s,S.edit.draft):''}`;
   const ci=decodeURIComponent(location.hash.slice(1)).split('/')[1];
@@ -474,12 +517,12 @@ async function ghPut(path,data,sha,msg){
   if(!r.ok)throw r.status;return (await r.json()).content.sha;
 }
 let chain=Promise.resolve();
-function save(sid,cards){
+function save(sid,cards,extra){
   const p=chain.then(async()=>{
     for(let i=0;i<3;i++){
       try{
         const cur=await ghGet('hub.json');const d=cur?cur.data:{v:1,sections:{}};
-        d.sections[sid]=Object.assign({},d.sections[sid]||S.secs[sid],{cards});
+        d.sections[sid]=Object.assign({},d.sections[sid]||S.secs[sid],{cards},extra||{});
         await ghPut('hub.json',d,cur&&cur.sha,'Update from Martina');
         S.secs=d.sections;toast('Saved');return true;
       }catch(e){
@@ -535,6 +578,7 @@ main.addEventListener('click',async e=>{
     if(!(await save(s,cards)))toast('Couldn’t save that tick');
     return}
   if(a==='clear'){const [s,c]=b.dataset.k.split('/');const cards=JSON.parse(JSON.stringify(S.secs[s].cards));cards[+c].f=cards[+c].f.filter(f=>!(f.k==='check'&&f.v));S.secs[s].cards=cards;render();await save(s,cards);return}
+  if(a==='rent'){setPlan(tab(),{mode:b.dataset.m});return}
   if(a==='more'||a==='less'){const k=b.dataset.k;if(a==='more')OPEN.add(k);else OPEN.delete(k);render();return}
   if(a==='copy'){
     const f=S.secs[b.dataset.s].cards[+b.dataset.c].f[+b.dataset.f];
@@ -560,6 +604,7 @@ main.addEventListener('click',async e=>{
     }else{b.dataset.sure=1;b.textContent='Tap again to delete'}
   }
 });
+main.addEventListener('change',e=>{const i=e.target.closest('[data-rent]');if(i)setPlan(tab(),{custom:Math.max(0,Math.round(+i.value||0))})});
 main.addEventListener('submit',async e=>{
   e.preventDefault();
   if(e.target.dataset.add){const [s,c]=e.target.dataset.add.split('/');const t=e.target.elements.it.value.trim();if(!t)return;
