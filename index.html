@@ -88,6 +88,8 @@ main{padding-top:6px;padding-bottom:110px}
 .num.low{color:var(--accentink)}
 .lowtag{display:inline-block;margin-left:8px;font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px;background:var(--warn);color:var(--warnink);vertical-align:middle}
 .pill.cnt{min-width:44px;font-size:20px;font-weight:900}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.chips span{font-size:13px;font-weight:800;padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.18)}
 .quip{margin:16px 0 0;font-size:15px;font-weight:800;font-style:italic;opacity:.92}
 .grp{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:22px 4px 10px}
 .card.fold{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:var(--ink);padding:16px 18px;margin-bottom:10px;cursor:pointer}
@@ -280,6 +282,19 @@ function summary(s){
     const [m,...rest]=s.stats;
     return `<section class="hero"><p class="kick">${esc(s.statsNote||kick)}</p><div class="big">${esc(m.v)}</div><div class="lbl">${esc(m.l)}${m.s?' · '+esc(m.s):''}</div>
       ${rest.length?`<div class="stats3">${rest.slice(0,3).map(x=>`<div><b>${esc(x.v)}</b>${esc(x.l)}${x.s?'<br>'+esc(x.s):''}</div>`).join('')}</div>`:''}</section>`;
+  }
+  if(s.id==='study'){
+    const it=(CV.items||[]).filter(a=>!a.done&&daysTo(a.due)>=0).sort((a,b)=>new Date(a.due)-new Date(b.due));
+    const nx=it[0],wk=it.filter(a=>daysTo(a.due)<=7).length,two=it.filter(a=>daysTo(a.due)<=14).length;
+    const by={};for(const a of it){const k=SHORT[a.course]||a.course;by[k]=(by[k]||0)+1}
+    const LINES=['Future you will thank you. Present you wants a nap.','SELECT motivation FROM me WHERE coffee > 0;','It compiled. Do not touch it.','Recursion: see recursion.','A database walks into a bar and joins two tables.','Business Strategy: say "synergy" and leave.','There are 10 types of people. You know the rest.','Cloud computing is just someone else’s computer, being slow.','The AI is learning. So, allegedly, are you.','Done is better than perfect. Submitted is better than done.','Read the brief. Then read it again. Then panic.','Your future degree, now loading…'];
+    const now=new Date(),line=LINES[Math.floor(now/864e5)%LINES.length];
+    const dn=nx?daysTo(nx.due):null;
+    return `<section class="hero" style="background:linear-gradient(135deg,#2f8f9d 0%,#4f6fd8 55%,#9a5ce0 100%)"><p class="kick">${nx?'Next deadline':'Study'}</p>
+      <div class="big">${nx?(dn===0?'Today':dn===1?'1 day':dn+' days'):'Free'}</div><div class="lbl">${nx?esc(nx.title):'Nothing due right now'}</div>
+      <div class="stats3"><div><b>${wk}</b>due this week</div><div><b>${two}</b>in the next 2 weeks</div><div><b>${it.length}</b>left to do</div></div>
+      ${Object.keys(by).length?`<div class="chips">${Object.entries(by).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`<span>${esc(k)} <b>${n}</b></span>`).join('')}</div>`:''}
+      <p class="quip">“${esc(line)}”</p></section>`;
   }
   if(s.id==='work'){
     const now=new Date();now.setHours(0,0,0,0);
