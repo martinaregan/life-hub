@@ -84,6 +84,11 @@ main{padding-top:6px;padding-bottom:110px}
 .res small{font-size:13px;color:var(--mute)}
 .res.bad{background:var(--warn);color:var(--warnink)}
 .res.bad span,.res.bad small{color:inherit}
+.num{font-size:22px;font-weight:900}
+.num.low{color:var(--accentink)}
+.lowtag{display:inline-block;margin-left:8px;font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px;background:var(--warn);color:var(--warnink);vertical-align:middle}
+.pill.cnt{min-width:44px;font-size:20px;font-weight:900}
+.quip{margin:16px 0 0;font-size:15px;font-weight:800;font-style:italic;opacity:.92}
 .grp{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:22px 4px 10px}
 .card.fold{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:var(--ink);padding:16px 18px;margin-bottom:10px;cursor:pointer}
 .card.fold .ic{width:22px;height:22px;flex:none;color:var(--c)}
@@ -219,7 +224,7 @@ const S={secs:{},edit:null,q:'',ready:false};
 const main=document.getElementById('main'),nav=document.getElementById('nav'),toastEl=document.getElementById('toast'),qEl=document.getElementById('q'),sbox=document.getElementById('sbox');
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-const KINDS=['text','copy','date','link','map','secret','check'];
+const KINDS=['text','copy','date','link','map','secret','check','count'];
 const TODO=/^(to ?do|status)$/i;
 const IC={
  emergency:'<path d="M12 21s-7-4.5-9-9.5C1.6 8 4 4.5 7.5 4.5c2 0 3.5 1.2 4.5 2.7 1-1.5 2.5-2.7 4.5-2.7C20 4.5 22.4 8 21 11.5 19 16.5 12 21 12 21z"/><path d="M12 9v5M9.5 11.5h5"/>',
@@ -264,7 +269,8 @@ function nextDate(v){
 const fmt=d=>d.getDate()+' '+MON[d.getMonth()]+(d.getFullYear()!==new Date().getFullYear()?' '+d.getFullYear():'');
 const inTxt=n=>n<0?`${-n} days ago`:n===0?'Today':n===1?'Tomorrow':n<60?`${n} days`:`${Math.round(n/30.4)} months`;
 
-function secTodos(s){const o=[];(s.cards||[]).forEach((c,ci)=>{for(const f of c.f||[])if(TODO.test(f.l||'')&&f.v)o.push({text:f.v,card:c.t,ci})});return o}
+const LOW=f=>f.k==='count'&&f.v!==''&&f.v!=null&&(+f.v||0)<=(f.min??2);
+function secTodos(s){const o=[];(s.cards||[]).forEach((c,ci)=>{for(const f of c.f||[]){if(TODO.test(f.l||'')&&f.v)o.push({text:f.v,card:c.t,ci});if(LOW(f))o.push({text:`${f.l}: ${+f.v||0} left, time to reorder`,card:c.t,ci})}});return o}
 function secDates(s,max){const o=[];(s.cards||[]).forEach((c,ci)=>{for(const f of c.f||[]){if(f.k!=='date')continue;const n=nextDate(f.v);if(n&&n.days>=0&&n.days<=max)o.push({...n,label:f.l,card:c.t,ci})}});return o.sort((a,b)=>a.days-b.days)}
 
 function summary(s){
@@ -273,6 +279,21 @@ function summary(s){
     const [m,...rest]=s.stats;
     return `<section class="hero"><p class="kick">${esc(s.statsNote||kick)}</p><div class="big">${esc(m.v)}</div><div class="lbl">${esc(m.l)}${m.s?' · '+esc(m.s):''}</div>
       ${rest.length?`<div class="stats3">${rest.slice(0,3).map(x=>`<div><b>${esc(x.v)}</b>${esc(x.l)}${x.s?'<br>'+esc(x.s):''}</div>`).join('')}</div>`:''}</section>`;
+  }
+  if(s.id==='work'){
+    const now=new Date();now.setHours(0,0,0,0);
+    const wd=(a,b)=>{let n=0;const d=new Date(a);while(d<b){const w=d.getDay();if(w&&w<6)n++;d.setDate(d.getDate()+1)}return n};
+    const brk=new Date(2026,11,19),fri=(5-now.getDay()+7)%7;
+    const st=new Date(2023,9,1),mo=(now.getFullYear()-st.getFullYear())*12+now.getMonth()-st.getMonth();
+    const hp=new Date(now.getFullYear()+(now.getMonth()>4?1:0),4,31),hpm=Math.max(0,Math.round((hp-now)/2629800000));
+    const LINES=['Nobody will notice the edge. Someone will notice the edge.','Final_v12_FINAL_actualfinal.nk','Render time estimate: yes.','Roto is just colouring in with extra steps.','The client wants it more real, but also more magical.','If it’s green, it’s spill. If it isn’t green, it’s probably also spill.','Ctrl+S. Again. Just in case.','Fix it in post. You are post.','Deadline isn’t a render manager, it’s a lifestyle.','It looked fine on the other monitor.','One small note (forty notes).','Can we just see one more version?','The plate was shot on a phone. Of course it was.','It’s not a bug, it’s a creative choice.'];
+    const line=LINES[Math.floor(now/864e5)%LINES.length];
+    const days=brk>now?wd(now,brk):0;
+    const big=days?days:fri===0?'Friday!':fri,lbl=days?'working days until Christmas off':fri===0?'it’s Friday':'days until Friday';
+    const td=secTodos(s);
+    return `<section class="hero" style="background:linear-gradient(135deg,#8a5cf6 0%,#c4508f 55%,#ef7d57 100%)"><p class="kick">${DAYS[now.getDay()]}${now.getDay()===0||now.getDay()===6?', no work today':''}</p><div class="big">${big}</div><div class="lbl">${lbl}</div>
+      <div class="stats3"><div><b>${fri===0?'Today':fri===1?'Tomorrow':fri+' days'}</b>to Friday</div><div><b>${Math.floor(mo/12)}y ${mo%12}m</b>at Storm</div><div><b>${hpm} months</b>to holiday pay</div></div>
+      <p class="quip">“${esc(line)}”</p></section>${td.length?`<section class="sum"><p class="kick">To sort</p>${td.map(x=>`<a class="srow warn" href="${link(s.id,x.ci)}"><b>${esc(x.text)}<small>${esc(x.card)}</small></b><span class="r">›</span></a>`).join('')}</section>`:''}`;
   }
   if(s.id==='christmas'){
     let fly=null,back=null,pres=null;
@@ -293,6 +314,7 @@ function val(f,ci,fi,sid,q){
   const v=f.v??'';
   const lbl=`<small>${hl(f.l,q)}</small>`;
   if(f.k==='check')return `<button class="tick${v?' on':''}" data-act="tick" data-s="${sid}" data-c="${ci}" data-f="${fi}" aria-pressed="${v?'true':'false'}"><span class="bx"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><b>${hl(f.l,q)}</b></button>`;
+  if(f.k==='count'){const n=+v||0,lo=LOW(f),bt=d=>`<button class="pill cnt" data-act="cnt" data-d="${d}" data-s="${sid}" data-c="${ci}" data-f="${fi}" aria-label="${d>0?'One more':'One less'} ${esc(f.l)}">${d>0?'+':'−'}</button>`;return `<div class="tx">${lbl}<b><span class="num${lo?' low':''}">${v===''?'?':n}</span>${lo?' <span class="lowtag">Running low</span>':''}</b></div><span class="acts">${bt(-1)}${bt(1)}</span>`}
   if(!v)return `<div class="tx">${lbl}<b class="empty">to add</b></div>`;
   const cp=`<button class="pill" data-act="copy" data-s="${sid}" data-c="${ci}" data-f="${fi}" aria-label="Copy ${esc(f.l)}">Copy</button>`;
   const call=phone(v,f.l)?`<a class="pill go" href="tel:${esc(tel(v))}" aria-label="Call ${esc(f.l)}">Call</a>`:'';
@@ -309,7 +331,7 @@ function val(f,ci,fi,sid,q){
 const OPEN=new Set();const SHOW=3;
 function card(s,c,ci,q){
   if(S.edit&&S.edit.s===s.id&&S.edit.c===ci)return editForm(s,S.edit.draft);
-  const key=s.id+'/'+ci,all=(c.f||[]).map((f,fi)=>({f,fi})).filter(x=>x.f.v||x.f.k==='check');
+  const key=s.id+'/'+ci,all=(c.f||[]).map((f,fi)=>({f,fi})).filter(x=>x.f.v||x.f.k==='check'||x.f.k==='count');
   const empty=(c.f||[]).filter(f=>!f.v&&f.k!=='check').length;
   const checks=(c.f||[]).filter(f=>f.k==='check'),done=checks.filter(f=>f.v).length;
   const ordered=c.list?[...all.filter(x=>!x.f.v),...all.filter(x=>x.f.v)]:[...all.filter(x=>TODO.test(x.f.l||'')),...all.filter(x=>!TODO.test(x.f.l||''))];
@@ -571,6 +593,12 @@ function boot(){
 main.addEventListener('click',async e=>{
   const b=e.target.closest('[data-act]');if(!b)return;
   const a=b.dataset.act;
+  if(a==='cnt'){
+    const s=b.dataset.s,c=+b.dataset.c,fi=+b.dataset.f;
+    const cards=JSON.parse(JSON.stringify(S.secs[s].cards));const f=cards[c].f[fi];f.v=String(Math.max(0,(+f.v||0)+(+b.dataset.d)));
+    S.secs[s].cards=cards;render();
+    if(!(await save(s,cards)))toast('Couldn’t save that');
+    return}
   if(a==='tick'){
     const s=b.dataset.s,c=+b.dataset.c,fi=+b.dataset.f;
     const cards=JSON.parse(JSON.stringify(S.secs[s].cards));const f=cards[c].f[fi];f.v=f.v?'':'1';
