@@ -125,6 +125,23 @@ main{padding-top:6px;padding-bottom:110px}
 .ct .ring span{width:48px;height:48px;border-radius:50%;background:var(--card);display:grid;place-items:center;font-size:20px;font-weight:900;color:var(--k)}
 .ct b{display:block;font-size:14px;font-weight:900}
 .ct small{display:block;font-size:12px;font-weight:700;color:var(--mute);margin-top:2px}
+.nuke{border-radius:24px;overflow:hidden;margin-bottom:16px;background:#262626;color:#d6d6d6;border:1px solid #3a3a3a;box-shadow:var(--shadow);font-feature-settings:"tnum"}
+.nk-bar{display:flex;justify-content:space-between;padding:9px 14px;background:#323232;border-bottom:1px solid #1a1a1a;font:700 12px/1.2 ui-monospace,Menlo,monospace;color:#9a9a9a}
+.dag{padding:18px 16px 10px;background-color:#2b2b2b;background-image:linear-gradient(#333 1px,transparent 1px),linear-gradient(90deg,#333 1px,transparent 1px);background-size:22px 22px;display:flex;flex-direction:column;align-items:center}
+.nk{width:78%;border-radius:6px;padding:8px 12px 9px;color:#111;box-shadow:0 2px 0 rgba(0,0,0,.45);border:1px solid rgba(0,0,0,.5);text-align:center}
+.nk .nn{display:block;font:800 11px/1.2 ui-monospace,Menlo,monospace;opacity:.7}
+.nk b{display:block;font-size:22px;font-weight:900;line-height:1.15}
+.nk small{display:block;font-size:12px;font-weight:800;opacity:.75}
+.nk.rd{background:#b8b8b8}.nk.gr{background:#7fbf6a}.nk.mg{background:#6b8cff}.nk.wr{background:#c9a35b}
+.pipe{display:block;width:2px;height:18px;background:#c8c8c8;position:relative}
+.pipe:after{content:"";position:absolute;bottom:-1px;left:-4px;border:5px solid transparent;border-top:6px solid #c8c8c8;border-bottom:0}
+.tl{padding:12px 16px 4px;background:#222;border-top:1px solid #1a1a1a}
+.tl-top{display:flex;justify-content:space-between;font:700 11px/1.4 ui-monospace,Menlo,monospace;color:#8a8a8a}
+.tl-bar{position:relative;height:10px;margin:6px 0;background:#151515;border-radius:3px;overflow:visible}
+.tl-bar u{display:block;height:100%;background:#e8a23a;border-radius:3px}
+.tl-bar em{position:absolute;top:-4px;width:2px;height:18px;background:#ff5a4f;margin-left:-1px}
+.nk-py{margin:0;padding:10px 16px 14px;background:#222;font:700 13px/1.45 ui-monospace,Menlo,monospace;color:#9fd07f}
+.nk-py span{color:#777}
 .grp{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:22px 4px 10px}
 .card.fold{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:var(--ink);padding:16px 18px;margin-bottom:10px;cursor:pointer}
 .card.fold .ic{width:22px;height:22px;flex:none;color:var(--c)}
@@ -282,7 +299,7 @@ let saving=false;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const hl=(s,q)=>{const t=esc(s);if(!q)return t;const i=t.toLowerCase().indexOf(esc(q).toLowerCase());return i<0?t:t.slice(0,i)+'<mark>'+t.slice(i,i+esc(q).length)+'</mark>'+t.slice(i+esc(q).length)};
 const toast=t=>{toastEl.textContent=t;toastEl.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>toastEl.classList.remove('on'),1400)};
-const list=()=>Object.entries(S.secs).map(([id,s])=>({id,...s})).sort((a,b)=>(a.order??99)-(b.order??99));
+const list=()=>Object.entries(S.secs).map(([id,s])=>({id,...s})).filter(s=>!s.until||new Date()<=new Date(s.until+'T23:59:59')).sort((a,b)=>(a.order??99)-(b.order??99));
 const tab=()=>decodeURIComponent(location.hash.slice(1)).split('/')[0]||(list()[0]||{}).id||'emergency';
 const phone=(v,l)=>{const s=String(v).trim(),d=s.replace(/[^\d]/g,'');if(!/^\+?[\d\s()-]+$/.test(s)||d.length<3||d.length>15)return false;if(l&&/number|nummer|\bid\b|policy|invoice|patient|student|bsn|account|serial/i.test(l)&&!/phone|helpline|tel/i.test(l))return false;return s[0]==='+'||s[0]==='0'||d.length<=4};
 const tel=v=>String(v).replace(/[^\d+]/g,'');
@@ -355,9 +372,19 @@ function summary(s){
     const days=brk>now?wd(now,brk):0;
     const big=days?days:fri===0?'Friday!':fri,lbl=days?'working days until Christmas off':fri===0?'it’s Friday':'days until Friday';
     const td=secTodos(s);
-    return `<section class="hero" style="background:linear-gradient(135deg,#8a5cf6 0%,#c4508f 55%,#ef7d57 100%)"><p class="kick">${DAYS[now.getDay()]}${now.getDay()===0||now.getDay()===6?', no work today':''}</p><div class="big">${big}</div><div class="lbl">${lbl}</div>
-      <div class="stats3"><div><b>${fri===0?'Today':fri===1?'Tomorrow':fri+' days'}</b>to Friday</div><div><b>${Math.floor(mo/12)}y ${mo%12}m</b>at Storm</div><div><b>${hpm} months</b>to holiday pay</div></div>
-      <p class="quip">“${esc(line)}”</p></section>${td.length?`<section class="sum"><p class="kick">To sort</p>${td.map(x=>`<a class="srow warn" href="${link(s.id,x.ci)}"><b>${esc(x.text)}<small>${esc(x.card)}</small></b><span class="r">›</span></a>`).join('')}</section>`:''}`;
+    const wkS=new Date(now);wkS.setDate(now.getDate()-((now.getDay()+6)%7));wkS.setHours(9,0,0,0);
+    const t=new Date(),wkE=new Date(wkS);wkE.setDate(wkS.getDate()+4);wkE.setHours(18,0,0,0);
+    let pc=Math.round(Math.max(0,Math.min(1,(t-wkS)/(wkE-wkS)))*100);const fr=1001+Math.round(pc*0.99);
+    const node=(cls,name,val,lab)=>`<div class="nk ${cls}"><span class="nn">${name}</span><b>${val}</b><small>${lab}</small></div>`;
+    return `<section class="nuke"><div class="nk-bar"><span>storm_week${String(Math.ceil(((now-new Date(now.getFullYear(),0,1))/864e5+1)/7)).padStart(2,'0')}_comp_v${String(mo).padStart(3,'0')}.nk</span><span>${DAYS[now.getDay()].slice(0,3)}</span></div>
+      <div class="dag">
+        ${node('rd','Read1',days?days:'0','working days to Christmas off')}<i class="pipe"></i>
+        ${node('gr','Grade1',fri===0?'Today':fri===1?'Tomorrow':fri+' days','to Friday')}<i class="pipe"></i>
+        ${node('mg','Merge1 (over)',Math.floor(mo/12)+'y '+(mo%12)+'m','at Storm')}<i class="pipe"></i>
+        ${node('wr','Write1',hpm+' months','to holiday pay')}
+      </div>
+      <div class="tl"><div class="tl-top"><span>Week render</span><span>frame ${fr} / 1100</span></div><div class="tl-bar"><u style="width:${pc}%"></u><em style="left:${pc}%"></em></div><div class="tl-top"><span>Mon 1001</span><span>${pc}% done</span><span>Fri 1100</span></div></div>
+      <p class="nk-py"><span># </span>${esc(line)}</p></section>${td.length?`<section class="sum"><p class="kick">To sort</p>${td.map(x=>`<a class="srow warn" href="${link(s.id,x.ci)}"><b>${esc(x.text)}<small>${esc(x.card)}</small></b><span class="r">›</span></a>`).join('')}</section>`:''}`;
   }
   if(s.id==='christmas'){
     let fly=null,back=null,pres=null;
@@ -512,9 +539,10 @@ function planCalc(s){
 }
 function planView(s){
   if(!s.plan)return s;const k=planCalc(s);
-  const stats=(s.stats||[]).map(x=>/^rent/i.test(x.l)?{...x,v:eur(k.rent),s:k.label}:/^bills/i.test(x.l)?{...x,v:eur(k.bills)}:x);
+  const svc=(s.cards||[]).find(c=>/^savings$/i.test(c.t)),bal=svc&&(svc.f||[]).find(f=>/now/i.test(f.l));
+  const stats=[{l:k.save<0?'short each month':'into savings each month',v:eur(Math.abs(k.save)),s:k.label},{l:'to spend',v:eur(s.plan.spend),s:'about '+eur(s.plan.spend*12/52)+' a week'},{l:'saved so far',v:bal?bal.v.split(' ')[0]:'?',s:''},{l:'bills',v:eur(k.bills),s:'a month'}];
   const charts=(s.charts||[]).map(c=>/where your pay goes/i.test(c.t)?{...c,s:'Each month, '+k.label+'. Savings is what’s left',items:[{l:'Rent and house bills',v:k.rent},{l:'Spending budget',v:s.plan.spend},{l:'Bills',v:k.bills},{l:'Savings',v:Math.max(k.save,0)}].concat(s.plan.pot?[{l:s.plan.potLabel||'Pot',v:s.plan.pot}]:[])}:c);
-  return {...s,stats,charts,statsNote:k.label.charAt(0).toUpperCase()+k.label.slice(1)+', pots set aside first'};
+  return {...s,stats,charts,statsNote:'This month'};
 }
 function planHtml(s){
   if(!s.plan)return '';const p=s.plan,k=planCalc(s);
@@ -524,7 +552,6 @@ function planHtml(s){
     <p class="sub">Pick how rent is split and the rest works itself out</p>
     <div class="seg">${b('half','50/50 · '+eur(k.half))}${b('eoin','Eóin pays '+eur(p.eoin)+' · '+eur(k.eo))}${b('custom','Other amount')}</div>
     ${p.mode==='custom'?`<label class="cust">Your share of the rent <input data-rent type="number" inputmode="numeric" min="0" step="10" value="${esc(String(p.custom||''))}"></label>`:''}
-    <div class="rows">${row('Take-home pay',p.pay)}${row('Rent',k.rent,1)}${row('Bills',k.bills,1)}${row('Spending budget',p.spend,1)}${p.pot?row(esc(p.potLabel||'Pot'),p.pot,1):''}</div>
     <div class="res${k.save<0?' bad':''}"><span>${k.save<0?'Short by':'Into savings'}</span><b>${eur(Math.abs(k.save))}<small> a month</small></b></div></section>`;
 }
 async function setPlan(sid,ch){
@@ -550,7 +577,9 @@ function chartHtml(c){
     body=`<div class="hb">${it.map(x=>`<div class="r"><span>${esc(x.l)}</span><div class="tr"><i style="width:${x.v/mx*100}%"></i></div><b>${eur(x.v)}</b></div>`).join('')}</div>`
     if(c.total)body+=`<div class="hb" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)"><div class="r"><span style="font-weight:900">Total</span><span></span><b style="font-size:17px">${eur(it.reduce((a,x)=>a+x.v,0))}</b></div></div>`;
   }
-  return `<section class="chart"><h3>${esc(c.t)}</h3>${c.s?`<p class="cs">${esc(c.s)}</p>`:'<div style="height:10px"></div>'}${body}${c.n?`<p class="note" style="margin-bottom:0">${esc(c.n)}</p>`:''}</section>`;
+  const ck='ch:'+c.t,shut=c.fold&&!OPEN.has(ck);
+  if(shut)return `<button class="card fold" data-act="more" data-k="${esc(ck)}"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span><span class="ft"><b>${esc(c.t)}</b>${c.s?`<small>${esc(c.s)}</small>`:''}</span><span class="chev">›</span></button>`;
+  return `<section class="chart"><h3${c.fold?` data-act="less" data-k="${esc(ck)}" style="cursor:pointer"`:''}>${esc(c.t)}${c.fold?' <span class="chev up" style="float:right">‹</span>':''}</h3>${c.s?`<p class="cs">${esc(c.s)}</p>`:'<div style="height:10px"></div>'}${body}${c.n?`<p class="note" style="margin-bottom:0">${esc(c.n)}</p>`:''}</section>`;
 }
 function weekStrip(){
   const t=new Date(),rows=[];
