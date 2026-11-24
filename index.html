@@ -177,6 +177,23 @@ main{padding-top:6px;padding-bottom:110px}
 .term .cm{color:#8b949e;font-style:italic;margin:8px 0}
 .cur{display:inline-block;width:9px;height:16px;background:#c9d1d9;vertical-align:-3px;animation:blink 1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
+.code .card,.code .ct{background:#0d1117;border:1px solid #30363d;color:#c9d1d9;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.code .card h3{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:17px;color:#7ee787}
+.code .card h3:before{content:"> ";color:#8b949e}
+.code .card .ic{display:none}
+.code .card h4{color:#d2a8ff!important;font-family:ui-monospace,Menlo,monospace}
+.code .card h4:before{content:"## "}
+.code .card b{color:#e6edf3;font-size:14.5px;line-height:1.35}
+.code .card small,.code .card .when,.code .card .sub{color:#8b949e}
+.code .card .r1{border-top-color:#21262d}
+.code .card .ed,.code .card .more{color:#79c0ff;font-family:ui-monospace,Menlo,monospace}
+.code .card .pill{background:#21262d;color:#c9d1d9;border:1px solid #30363d}
+.code .card a{color:#79c0ff}
+.code .card .note{color:#8b949e;border-top-color:#21262d}
+.code .card .note:before{content:"// "}
+.code .ct b{color:#e6edf3}.code .ct small{color:#8b949e}
+.code .ct .ring span{background:#0d1117}
+.code .grp{font-family:ui-monospace,Menlo,monospace;color:#8b949e}
 .grp{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:22px 4px 10px}
 .card.fold{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:var(--ink);padding:16px 18px;margin-bottom:10px;cursor:pointer}
 .card.fold .ic{width:22px;height:22px;flex:none;color:var(--c)}
@@ -653,7 +670,7 @@ function render(){
   const s=secs.find(x=>x.id===t);
   if(!s){location.hash=secs[0].id;return}
   {const k=decodeURIComponent(location.hash.slice(1)).split('/')[1];if(k!==undefined)OPEN.add(s.id+'/'+k)}
-  const cards=s.cards||[],sv=planView(s);main.className='wrap'+(s.id==='christmas'?' xmas':'');
+  const cards=s.cards||[],sv=planView(s);main.className='wrap'+(s.id==='christmas'?' xmas':s.id==='study'?' code':'');
   main.innerHTML=`<h2 class="pg">${esc(s.title)}</h2>${s.blurb?`<p class="lede">${esc(s.blurb)}</p>`:'<div style="height:12px"></div>'}
     ${s.id==='todo'?weekStrip():summary(sv)}
     ${s.id==='study'?canvasCard(s):''}
