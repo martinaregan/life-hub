@@ -345,7 +345,7 @@ function cvParse(res){
   if(typeof p==='string'){try{p=JSON.parse(p)}catch{p=null}}
   if(p&&!Array.isArray(p)&&Array.isArray(p.items))p=p.items;
   if(!Array.isArray(p))return [];
-  return p.filter(it=>it&&it.plannable_type!=='calendar_event'&&it.plannable&&it.plannable_date).map(it=>({
+  return p.filter(it=>it&&['assignment','quiz','discussion_topic'].includes(it.plannable_type)&&it.plannable&&it.plannable_date&&!/survey/i.test(String(it.plannable.title||''))).map(it=>({
     title:String(it.plannable.title||'Untitled').replace(/^[^\p{L}\p{N}]+/u,'').trim(),
     course:String(it.context_name||''),
     due:new Date(it.plannable_date),
@@ -359,21 +359,30 @@ function cvMsg(){
   if(CV.items)return '';
   return '<p class="cvmsg">No assignments synced yet. They update from Canvas once a day.</p>';
 }
+const SHORT={'Introduction to Databases':'Databases','Cloud Computing Infrastructure':'Cloud','Introduction to Artificial Intelligence':'AI','Programming Paradigms':'Paradigms','Business Strategy':'Strategy'};
+const short=c=>SHORT[c]||c;
+const graded=t=>/assessment/i.test(t)&&!/practice/i.test(t);
+function asgRow(a){const n=daysTo(a.due);
+  return `<a class="asg" href="${esc(a.url)}" target="_blank" rel="noopener"><span class="dd">${a.due.getDate()}<small>${MON[a.due.getMonth()]}</small></span><span class="tx"><b>${esc(a.title)}</b><small>${esc(short(a.course))}${graded(a.title)?' · <span style="color:var(--accentink)">Graded</span>':''}</small></span><span class="st${n<=3?' hot':''}">${n<0?'Missed':n===0?'Today':n===1?'Tomorrow':n+' days'}</span></a>`}
 function canvasCard(s){
-  const up=(CV.items||[]).filter(a=>!a.done);
-  const rows=up.map(a=>{const n=daysTo(a.due);return `<a class="asg${a.done?' done':''}" href="${esc(a.url)}" target="_blank" rel="noopener"><span class="dd">${a.due.getDate()}<small>${MON[a.due.getMonth()]}</small></span><span class="tx"><b>${esc(a.title)}</b><small>${esc(a.course)} · ${DAYS[a.due.getDay()].slice(0,3)} ${hhmm(a.due)}</small></span><span class="st${n<=3?' hot':''}">${n<0?'Overdue':n===0?'Today':n===1?'Tomorrow':n+' days'}</span></a>`}).join('');
-  const body=rows||(CV.items?'<p class="cvmsg">Nothing left to submit.</p>':'');
+  const open=(CV.items||[]).filter(a=>!a.done);
+  const up=open.filter(a=>daysTo(a.due)>=0),missed=open.filter(a=>daysTo(a.due)<0);
+  const g=[['This week',up.filter(a=>daysTo(a.due)<=7)],['Next week',up.filter(a=>daysTo(a.due)>7&&daysTo(a.due)<=14)],['Later',up.filter(a=>daysTo(a.due)>14)]].filter(x=>x[1].length);
+  const showLater=OPEN.has('cv-later'),showMissed=OPEN.has('cv-missed');
+  const body=g.map(([t,xs])=>{const lim=t==='Later'&&!showLater?3:xs.length;
+    return `<h4 style="margin:14px 0 2px;font-size:13px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--mute)">${t} · ${xs.length}</h4>${xs.slice(0,lim).map(asgRow).join('')}${xs.length>lim?`<button class="more" data-act="more" data-k="cv-later">Show ${xs.length-lim} more</button>`:''}`}).join('');
+  const miss=missed.length?`<button class="more" data-act="${showMissed?'less':'more'}" data-k="cv-missed">${showMissed?'Hide':'Show'} ${missed.length} past due date</button>${showMissed?missed.map(asgRow).join(''):''}`:'';
   return `<article class="card" style="--c:${esc(s.color)}"><div class="ch"><span class="ic">${icon('study')}</span><h3>Assignments</h3><a class="ed" href="https://opit.instructure.com" target="_blank" rel="noopener" style="text-decoration:none">Canvas</a></div>
-    <p class="sub">Everything still to submit, synced from Canvas daily</p><div class="rows">${body}</div>${cvMsg()}
+    <div class="rows">${body||(CV.items?'<p class="cvmsg">Nothing left to submit.</p>':'')}</div>${miss}${cvMsg()}
     ${CV.at?`<p class="fresh">Updated ${fmt(new Date(CV.at))} at ${hhmm(new Date(CV.at))}</p>`:''}</article>`;
 }
 function canvasSummary(){
   if(!CV.items)return '';
-  const due=CV.items.filter(a=>!a.done);
+  const due=CV.items.filter(a=>!a.done&&daysTo(a.due)>=0);
   const soon=due.filter(a=>daysTo(a.due)<=14);
   const t=new Date();
   return `<section class="sum"><p class="kick">${DAYS[t.getDay()]} ${t.getDate()} ${MON[t.getMonth()]}</p><h2>${soon.length?`${soon.length} due in the next 2 weeks`:'Nothing due for 2 weeks'}</h2>
-    ${due.slice(0,3).map(a=>{const n=daysTo(a.due);return `<a class="srow${n<=3?' warn':''}" href="${esc(a.url)}" target="_blank" rel="noopener"><b>${esc(a.title)}<small>${esc(a.course)}</small></b><span class="r">${n<0?'Overdue':n===0?'Today':n===1?'Tomorrow':n+' days'}</span></a>`}).join('')}</section>`;
+    ${due.slice(0,3).map(a=>{const n=daysTo(a.due);return `<a class="srow${n<=3?' warn':''}" href="${esc(a.url)}" target="_blank" rel="noopener"><b>${esc(a.title)}<small>${esc(short(a.course))}</small></b><span class="r">${n<0?'Overdue':n===0?'Today':n===1?'Tomorrow':n+' days'}</span></a>`}).join('')}</section>`;
 }
 /* ---- charts stored on a section as charts:[{t,s,type,items,n}] ---- */
 const PAL=['#d4748f','#8c7a9e','#e8a7b9','#b4526f','#c9b8a8','#6f9a8a','#e0a46a'];
@@ -402,7 +411,7 @@ function chartHtml(c){
 function weekStrip(){
   const t=new Date(),rows=[];
   for(const s of list())(s.cards||[]).forEach((c,ci)=>{for(const f of c.f||[]){if(f.k!=='date')continue;const n=nextDate(f.v);if(n&&n.days>=0&&n.days<=7)rows.push({d:n.d,days:n.days,title:c.t,sub:f.l,href:link(s.id,ci)})}});
-  for(const a of (CV.items||[]))if(!a.done){const n=daysTo(a.due);if(n<=7)rows.push({d:a.due,days:n,title:a.title,sub:a.course,href:a.url,ext:1})}
+  for(const a of (CV.items||[]))if(!a.done){const n=daysTo(a.due);if(n>=0&&n<=7)rows.push({d:a.due,days:n,title:a.title,sub:a.course,href:a.url,ext:1})}
   rows.sort((a,b)=>a.days-b.days);
   return `<section class="sum"><p class="kick">Next 7 days</p><h2>${rows.length?rows.length+' coming up':'Quiet week'}</h2>
     ${rows.slice(0,8).map(r=>`<a class="srow${r.days<=1?' warn':''}" href="${esc(r.href)}"${r.ext?' target="_blank" rel="noopener"':''}><b>${esc(r.title)}<small>${esc(r.sub)} · ${DAYS[r.d.getDay()].slice(0,3)} ${r.d.getDate()} ${MON[r.d.getMonth()]}</small></b><span class="r">${r.days<0?'Overdue':r.days===0?'Today':r.days===1?'Tomorrow':r.days+' days'}</span></a>`).join('')}</section>`;
