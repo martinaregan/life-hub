@@ -139,6 +139,29 @@ main{padding-top:6px;padding-bottom:110px}
 .sl-row b{display:block;font-size:18px;font-weight:900}
 .sl-row small{margin-top:3px}
 .slate .sub{margin:0;padding:14px 18px 16px;text-align:center;font-size:15px;font-weight:700;color:#f5d547;background:#000;text-shadow:0 1px 0 #000}
+.xhero{position:relative;overflow:hidden}
+.snow{position:absolute;inset:-100px 0 0 0;pointer-events:none;background-image:radial-gradient(2px 2px at 20px 30px,#fff,transparent),radial-gradient(2px 2px at 80px 120px,#fff,transparent),radial-gradient(3px 3px at 150px 60px,#fff,transparent),radial-gradient(2px 2px at 230px 160px,#fff,transparent),radial-gradient(3px 3px at 300px 20px,#fff,transparent),radial-gradient(2px 2px at 340px 110px,#fff,transparent);background-size:360px 200px;opacity:.75;animation:snow 9s linear infinite}
+.snow.s2{background-size:260px 160px;opacity:.45;animation-duration:14s}
+@keyframes snow{to{transform:translateY(100px)}}
+@media (prefers-reduced-motion:reduce){.snow{animation:none}}
+.xmas .card{border-top:4px solid #c94f6d}
+.xmas .card:nth-of-type(even){border-top-color:#2f6b55}
+.xmas .card .ic svg{stroke:#c94f6d}
+.xmas .tick.on .bx{background:#2f6b55;border-color:#2f6b55}
+.xmas .pg:after{content:" \2744";color:#c94f6d}
+.giftc{margin:2px 0 0 34px;font-size:14px;font-weight:800;color:var(--mute)}
+.gifts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.gift{font:inherit;color:var(--ink);background:var(--soft);border:2px dashed var(--line);border-radius:18px;padding:12px 6px 10px;text-align:center;cursor:pointer;touch-action:manipulation}
+.gift .box{display:block;position:relative;width:44px;height:38px;margin:0 auto 8px;border-radius:6px;background:color-mix(in srgb,var(--g) 35%,transparent)}
+.gift .box:before{content:"";position:absolute;left:50%;top:0;bottom:0;width:7px;margin-left:-3.5px;background:rgba(255,255,255,.5)}
+.gift .box:after{content:"";position:absolute;left:0;right:0;top:50%;height:7px;margin-top:-3.5px;background:rgba(255,255,255,.5)}
+.gift .box i{position:absolute;left:50%;top:-9px;width:22px;height:12px;margin-left:-11px;border:3px solid rgba(255,255,255,.6);border-radius:50% 50% 0 0;border-bottom:0}
+.gift b{display:block;font-size:14px;font-weight:900}
+.gift small{display:block;font-size:11px;font-weight:800;color:var(--mute);margin-top:2px}
+.gift.on{border-style:solid;border-color:var(--g);background:color-mix(in srgb,var(--g) 14%,var(--card))}
+.gift.on .box{background:var(--g)}
+.gift.on .box:before,.gift.on .box:after{background:#f5d547}.gift.on .box i{border-color:#f5d547}
+.gift.on small{color:var(--g)}
 .grp{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:22px 4px 10px}
 .card.fold{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:var(--ink);padding:16px 18px;margin-bottom:10px;cursor:pointer}
 .card.fold .ic{width:22px;height:22px;flex:none;color:var(--c)}
@@ -183,7 +206,7 @@ form input,form select,form textarea{border:1px solid var(--line);border-radius:
 nav.tabs{flex:none;position:relative;z-index:30;background:var(--card);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
 .navin{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;max-width:760px;margin:auto}
 .navin::-webkit-scrollbar{display:none}
-.navin a{flex:0 0 auto;min-width:78px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 8px 7px;border-radius:16px;text-decoration:none;color:var(--mute);font-size:13px;font-weight:800}
+.navin a{flex:1 1 0;min-width:52px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 7px;border-radius:16px;text-decoration:none;color:var(--mute);font-size:11.5px;font-weight:800;white-space:nowrap}
 .navin a svg{width:26px;height:26px;stroke:var(--c);fill:color-mix(in srgb,var(--c) 22%,transparent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .navin a[aria-current]{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accentink)}
 .fab{position:absolute;right:max(16px,calc(50% - 264px));bottom:18px;z-index:31;width:62px;height:62px;border-radius:50%;border:0;background:var(--accent);color:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:0 10px 24px -8px var(--accent)}
@@ -384,7 +407,7 @@ function summary(s){
     let fly=null,back=null,pres=null;
     for(const c of s.cards||[])for(const f of c.f||[]){if(/fly home/i.test(f.l))fly=nextDate(f.v);if(/fly back/i.test(f.l))back=nextDate(f.v)}
     const pc=(s.cards||[]).find(c=>/present/i.test(c.t));if(pc){const ch=(pc.f||[]).filter(f=>f.k==='check');pres=[ch.filter(f=>f.v).length,ch.length]}
-    if(fly&&fly.days>=0)return `<section class="hero" style="background:linear-gradient(135deg,#e66f6f 0%,#c94f6d 50%,#2f6b55 100%)"><p class="kick">Going home for Christmas</p><div class="big">${fly.days===0?'Today!':fly.days}</div><div class="lbl">${fly.days===0?'you fly home':fly.days===1?'day until you fly home':'days until you fly home'}</div>
+    if(fly&&fly.days>=0)return `<section class="hero xhero" style="background:linear-gradient(160deg,#b8324a 0%,#8e2340 45%,#1f5a45 100%)"><i class="snow"></i><i class="snow s2"></i><p class="kick">❄ Going home for Christmas ❄</p><div class="big">${fly.days===0?'Today!':fly.days}</div><div class="lbl">${fly.days===0?'you fly home':fly.days===1?'day until you fly home':'days until you fly home'}</div>
       <div class="stats3"><div><b>${fmt(fly.d)}</b>Fly home</div>${back?`<div><b>${fmt(back.d)}</b>Fly back</div>`:''}${pres?`<div><b>${pres[0]}/${pres[1]}</b>Presents bought</div>`:''}</div></section>`;
   }
   const td=secTodos(s),dt=secDates(s,120);
@@ -421,6 +444,7 @@ function card(s,c,ci,q){
   const checks=(c.f||[]).filter(f=>f.k==='check'),done=checks.filter(f=>f.v).length;
   const ordered=c.list?[...all.filter(x=>!x.f.v),...all.filter(x=>x.f.v)]:[...all.filter(x=>TODO.test(x.f.l||'')),...all.filter(x=>!TODO.test(x.f.l||''))];
   if(c.calls&&!q)return `<section class="card" id="c-${s.id}-${ci}" style="--c:${esc(s.color)}"><div class="ch"><span class="ic">${icon(s.id)}</span><h3>${esc(c.t)}</h3><button class="ed" data-act="edit" data-s="${s.id}" data-c="${ci}">Edit</button></div><div class="cgrid">${(c.f||[]).filter(f=>f.v).map((f,i)=>`<a class="callt${i===0?' sos':''}" href="tel:${esc(tel(f.v))}"><b>${esc(f.l)}</b><span>${esc(f.v)}</span></a>`).join('')}</div>${c.n?`<p class="note" style="border:0;padding-top:4px">${esc(c.n)}</p>`:''}</section>`;
+  if(s.id==='christmas'&&/present/i.test(c.t)&&!q){const g=(c.f||[]).map((f,fi)=>({f,fi})).filter(x=>x.f.k==='check'),got=g.filter(x=>x.f.v).length;return `<section class="card" id="c-${s.id}-${ci}" style="--c:${esc(s.color)}"><div class="ch"><span class="ic">${icon(s.id)}</span><h3>${esc(c.t)}</h3><button class="ed" data-act="edit" data-s="${s.id}" data-c="${ci}">Edit</button></div><p class="giftc">${got} of ${g.length} sorted</p><div class="gifts">${g.map(({f,fi},i)=>`<button class="gift${f.v?' on':''}" style="--g:${['#c94f6d','#2f6b55','#c9a35b','#8e2340','#3f7d68'][i%5]}" data-act="tick" data-s="${s.id}" data-c="${ci}" data-f="${fi}" aria-pressed="${f.v?'true':'false'}"><span class="box"><i></i></span><b>${esc(f.l)}</b><small>${f.v?'Sorted':'Tap when bought'}</small></button>`).join('')}</div>${c.n?`<p class="note">${esc(c.n)}</p>`:''}</section>`}
   const cnts=(c.f||[]).length&&(c.f||[]).every(f=>f.k==='count');
   if(cnts&&!q&&(OPEN.has(key)||c.open))return `<section class="card" id="c-${s.id}-${ci}" style="--c:${esc(s.color)}"><div class="ch" data-act="less" data-k="${esc(key)}" style="cursor:pointer"><span class="ic">${icon(s.id)}</span><h3>${esc(c.t)}</h3><span class="chev up">‹</span><button class="ed" data-act="edit" data-s="${s.id}" data-c="${ci}">Edit</button></div><div class="sgrid">${c.f.map((f,fi)=>{const n=+f.v||0,un=f.v===''||f.v==null,lo=LOW(f),pc=un?0:Math.min(100,Math.round(n/Math.max(1,(f.min??2)*3)*100)),col=PAL[fi%PAL.length];return `<div class="st${lo?' lo':''}" style="--s:${col}"><span class="sn">${esc(f.l)}</span><b>${un?'?':n}</b><i><u style="width:${pc}%"></u></i><span class="sb"><button class="pill cnt" data-act="cnt" data-d="-1" data-s="${s.id}" data-c="${ci}" data-f="${fi}" aria-label="One less ${esc(f.l)}">−</button><button class="pill cnt" data-act="cnt" data-d="1" data-s="${s.id}" data-c="${ci}" data-f="${fi}" aria-label="One more ${esc(f.l)}">+</button></span></div>`}).join('')}</div>${c.n?`<p class="note">${esc(c.n)}</p>`:''}</section>`;
   const fold=!q&&!c.open&&!c.list&&!checks.length&&!OPEN.has(key)&&(s.cards||[]).length>=5;
@@ -610,7 +634,7 @@ function render(){
   const s=secs.find(x=>x.id===t);
   if(!s){location.hash=secs[0].id;return}
   {const k=decodeURIComponent(location.hash.slice(1)).split('/')[1];if(k!==undefined)OPEN.add(s.id+'/'+k)}
-  const cards=s.cards||[],sv=planView(s);
+  const cards=s.cards||[],sv=planView(s);main.className='wrap'+(s.id==='christmas'?' xmas':'');
   main.innerHTML=`<h2 class="pg">${esc(s.title)}</h2>${s.blurb?`<p class="lede">${esc(s.blurb)}</p>`:'<div style="height:12px"></div>'}
     ${s.id==='todo'?weekStrip():summary(sv)}
     ${s.id==='study'?canvasCard(s):''}
