@@ -243,6 +243,25 @@ body.p-christmas{--accent:#b8324a;--accentink:light-dark(#8e2340,#ec8a8f);--grad
 @media (prefers-reduced-motion:reduce){.med .callt.sos{animation:none}}
 .med .st{background:#24181d;border-color:#3a2830}
 .med .st .sn{color:#b59aa3}
+.sp-top{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.sp-top div{background:var(--soft);border-radius:14px;padding:10px}
+.sp-top b{display:block;font-size:19px;font-weight:900}.sp-top small{display:block;font-size:12px;font-weight:700;color:var(--mute)}
+.sp-top .neg b{color:#e0606f}
+.spf{display:grid;grid-template-columns:90px 1fr;gap:8px;margin:6px 0 14px}
+.spf input,.spf select{font:inherit;font-size:16px;font-weight:700;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
+.spf input[name=n]{grid-column:1/2;grid-column:1/-1}
+.spf button{grid-column:1/-1}
+.sp-c{margin:10px 0}
+.sp-t{display:flex;justify-content:space-between;font-size:14px;font-weight:800}
+.sp-t small{color:var(--mute);font-weight:700}
+.sp-b{height:8px;border-radius:99px;background:var(--soft);margin-top:5px;overflow:hidden}
+.sp-b u{display:block;height:100%;background:var(--accent);border-radius:99px}
+.sp-c.over .sp-b u{background:#e0606f}.sp-c.over .sp-t b{color:#e0606f}
+.sp-h{margin:16px 0 4px;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.sp-r{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+.sp-r>span{font-size:12px;font-weight:800;color:var(--mute);width:48px}
+.sp-r b{flex:1;font-size:15px;font-weight:800;min-width:0}.sp-r b small{display:block;font-size:12px;color:var(--mute)}
+.sp-r em{font-style:normal;font-weight:900}
 .grp{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:22px 4px 10px}
 .card.fold{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:var(--ink);padding:16px 18px;margin-bottom:10px;cursor:pointer}
 .card.fold .ic{width:22px;height:22px;flex:none;color:var(--c)}
@@ -642,6 +661,7 @@ function layoutHtml(s,sv){
       if(it==='plan'){inner+=planHtml(s);continue}
       if(it==='receipt'){inner+=receiptHtml(s);continue}
       if(it==='goal'){inner+=goalHtml(s);continue}
+      if(it==='spend'){inner+=spendHtml(s);continue}
       const [k,...r]=it.split(':'),t=r.join(':');
       if(k==='card'){const ci=cards.findIndex(c=>c.t===t);if(ci>=0){used.add(ci);inner+=card(s,cards[ci],ci)}}
       else if(k==='chart'){const c=ch.find(c=>c.t===t);if(c)inner+=chartHtml(c)}
@@ -666,10 +686,28 @@ function receiptHtml(s){
 function goalHtml(s){
   const c=(s.cards||[]).find(c=>/^savings$/i.test(c.t));if(!c)return '';
   const num=re=>{const f=(c.f||[]).find(f=>re.test(f.l));return f?+(f.v.match(/€([\d,]+)/)||[,'0'])[1].replace(/,/g,''):0};
-  const have=num(/now/i),goal=num(/goal/i),k=planCalc(s),pc=goal?Math.min(100,Math.round(have/goal*100)):0;
-  const mths=k.save>0&&goal>have?Math.ceil((goal-have)/k.save):0,when=new Date();when.setMonth(when.getMonth()+mths);
+  const have=num(/now/i),goal=num(/goal/i),k=planCalc(s),pc=goal?Math.min(100,Math.round(have/goal*100)):0,net=k.save+(s.plan.pot||0)-(s.plan.potUse||0);
+  const mths=net>0&&goal>have?Math.ceil((goal-have)/net):0,when=new Date();when.setMonth(when.getMonth()+mths);
   const ci=(s.cards||[]).indexOf(c);
-  return `<a class="goal" href="#money/${ci}"><div class="gt"><span>Safety net</span><b>${eur(have)} <small>of ${eur(goal)}</small></b></div><div class="gb"><u style="width:${pc}%"></u></div><small>${goal<=have?'Done. Nice.':mths?`About ${MON[when.getMonth()]} ${when.getFullYear()} at ${eur(k.save)} a month, sooner with the calf money`:'Not moving at this rent split'}</small></a>`;
+  return `<a class="goal" href="#money/${ci}"><div class="gt"><span>Safety net</span><b>${eur(have)} <small>of ${eur(goal)}</small></b></div><div class="gb"><u style="width:${pc}%"></u></div><small>${goal<=have?'Done. Nice.':mths?`About ${MON[when.getMonth()]} ${when.getFullYear()} at about ${eur(net)} a month, sooner with the calf money`:'Not moving at this rent split'}</small></a>`;
+}
+function spendHtml(s){
+  const p=s.plan,cats=p.cats||{},L=s.spends||[],now=new Date();
+  const mon=L.filter(x=>{const d=new Date(x.d);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear()});
+  const ws=new Date(now);ws.setHours(0,0,0,0);ws.setDate(ws.getDate()-((ws.getDay()+6)%7));
+  const wk=L.filter(x=>new Date(x.d)>=ws);
+  const sum=a=>a.reduce((t,x)=>t+(+x.a||0),0),mt=sum(mon),wt=sum(wk),wb=p.spend*12/52;
+  const by={};for(const x of mon)by[x.c]=(by[x.c]||0)+(+x.a||0);
+  const e2=v=>'€'+(+v).toLocaleString('en-GB',{minimumFractionDigits:v%1?2:0,maximumFractionDigits:2});
+  const bar=(l,v,b)=>{const pc=b?Math.min(100,Math.round(v/b*100)):0,over=b&&v>b;return `<div class="sp-c${over?' over':''}"><div class="sp-t"><span>${esc(l)}</span><b>${e2(v)} <small>of ${eur(b)}</small></b></div><div class="sp-b"><u style="width:${pc}%"></u></div></div>`};
+  const opts=Object.keys(cats).map(k=>`<option>${esc(k)}</option>`).join('');
+  const recent=L.map((x,i)=>({...x,i})).sort((a,b)=>b.d.localeCompare(a.d)||b.i-a.i).slice(0,6);
+  return `<section class="card spend" style="--c:${esc(s.color)}"><div class="ch"><span class="ic">${icon(s.id)}</span><h3>What I've spent</h3></div>
+    <div class="sp-top"><div><b>${e2(mt)}</b><small>this month of ${eur(p.spend)}</small></div><div><b>${e2(wt)}</b><small>this week of ${eur(wb)}</small></div><div class="${mt>p.spend?'neg':''}"><b>${eur(p.spend-mt)}</b><small>left this month</small></div></div>
+    <form class="spf" data-spend="1"><input name="a" type="number" inputmode="decimal" step="0.01" min="0" placeholder="€" required aria-label="Amount"><select name="c" aria-label="Category">${opts}</select><input name="n" placeholder="What for? (optional)" autocomplete="off" aria-label="Note"><button class="pill go" type="submit">Add</button></form>
+    ${Object.keys(cats).map(k=>bar(k,by[k]||0,cats[k])).join('')}
+    ${recent.length?`<h4 class="sp-h">Latest</h4>${recent.map(x=>`<div class="sp-r"><span>${fmt(new Date(x.d))}</span><b>${esc(x.n||x.c)}<small>${esc(x.c)}</small></b><em>${e2(x.a)}</em><button class="pill del" data-act="sprm" data-i="${x.i}" aria-label="Remove">×</button></div>`).join('')}`:'<p class="note">Nothing logged yet this month. Add what you spend as you go.</p>'}
+  </section>`;
 }
 function planCalc(s){
   const p=s.plan,bc=(s.charts||[]).find(c=>/monthly bills/i.test(c.t));
@@ -845,6 +883,7 @@ main.addEventListener('click',async e=>{
     return}
   if(a==='clear'){const [s,c]=b.dataset.k.split('/');const cards=JSON.parse(JSON.stringify(S.secs[s].cards));cards[+c].f=cards[+c].f.filter(f=>!(f.k==='check'&&f.v));S.secs[s].cards=cards;render();await save(s,cards);return}
   if(a==='rent'){setPlan(tab(),{mode:b.dataset.m});return}
+  if(a==='sprm'){const sec=S.secs[tab()];const L=(sec.spends||[]).slice();L.splice(+b.dataset.i,1);sec.spends=L;render();await save(tab(),sec.cards,{spends:L});return}
   if(a==='more'||a==='less'){const k=b.dataset.k;if(a==='more')OPEN.add(k);else OPEN.delete(k);render();return}
   if(a==='copy'){
     const f=S.secs[b.dataset.s].cards[+b.dataset.c].f[+b.dataset.f];
@@ -870,6 +909,7 @@ main.addEventListener('click',async e=>{
     }else{b.dataset.sure=1;b.textContent='Tap again to delete'}
   }
 });
+main.addEventListener('submit',async e=>{const f=e.target.closest('[data-spend]');if(!f)return;e.preventDefault();e.stopImmediatePropagation();const a=Math.round(parseFloat(f.a.value)*100)/100;if(!(a>0))return;const sec=S.secs[tab()],t=new Date(),d=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');const L=(sec.spends||[]).concat([{d,a,c:f.c.value,n:f.n.value.trim()}]);sec.spends=L;render();await save(tab(),sec.cards,{spends:L})});
 main.addEventListener('change',e=>{const i=e.target.closest('[data-rent]');if(i)setPlan(tab(),{custom:Math.max(0,Math.round(+i.value||0))})});
 main.addEventListener('submit',async e=>{
   e.preventDefault();
