@@ -253,6 +253,13 @@ function summary(s){
     return `<section class="hero"><p class="kick">${esc(s.statsNote||kick)}</p><div class="big">${esc(m.v)}</div><div class="lbl">${esc(m.l)}${m.s?' · '+esc(m.s):''}</div>
       ${rest.length?`<div class="stats3">${rest.slice(0,3).map(x=>`<div><b>${esc(x.v)}</b>${esc(x.l)}${x.s?'<br>'+esc(x.s):''}</div>`).join('')}</div>`:''}</section>`;
   }
+  if(s.id==='christmas'){
+    let fly=null,back=null,pres=null;
+    for(const c of s.cards||[])for(const f of c.f||[]){if(/fly home/i.test(f.l))fly=nextDate(f.v);if(/fly back/i.test(f.l))back=nextDate(f.v)}
+    const pc=(s.cards||[]).find(c=>/present/i.test(c.t));if(pc){const ch=(pc.f||[]).filter(f=>f.k==='check');pres=[ch.filter(f=>f.v).length,ch.length]}
+    if(fly&&fly.days>=0)return `<section class="hero" style="background:linear-gradient(135deg,#e66f6f 0%,#c94f6d 50%,#2f6b55 100%)"><p class="kick">Going home for Christmas</p><div class="big">${fly.days===0?'Today!':fly.days}</div><div class="lbl">${fly.days===0?'you fly home':fly.days===1?'day until you fly home':'days until you fly home'}</div>
+      <div class="stats3"><div><b>${fmt(fly.d)}</b>Fly home</div>${back?`<div><b>${fmt(back.d)}</b>Fly back</div>`:''}${pres?`<div><b>${pres[0]}/${pres[1]}</b>Presents bought</div>`:''}</div></section>`;
+  }
   const td=secTodos(s),dt=secDates(s,120);
   if(s.id==='emergency'){
     const ph=c=>((c&&c.f)||[]).filter(f=>f.v&&phone(f.v,f.l));
