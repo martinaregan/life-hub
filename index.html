@@ -398,6 +398,14 @@ function chartHtml(c){
   }
   return `<section class="chart"><h3>${esc(c.t)}</h3>${c.s?`<p class="cs">${esc(c.s)}</p>`:'<div style="height:10px"></div>'}${body}${c.n?`<p class="note" style="margin-bottom:0">${esc(c.n)}</p>`:''}</section>`;
 }
+function weekStrip(){
+  const t=new Date(),rows=[];
+  for(const s of list())(s.cards||[]).forEach((c,ci)=>{for(const f of c.f||[]){if(f.k!=='date')continue;const n=nextDate(f.v);if(n&&n.days>=0&&n.days<=7)rows.push({d:n.d,days:n.days,title:c.t,sub:f.l,href:link(s.id,ci)})}});
+  for(const a of (CV.items||[]))if(!a.done){const n=daysTo(a.due);if(n<=7)rows.push({d:a.due,days:n,title:a.title,sub:a.course,href:a.url,ext:1})}
+  rows.sort((a,b)=>a.days-b.days);
+  return `<section class="sum"><p class="kick">Next 7 days</p><h2>${rows.length?rows.length+' coming up':'Quiet week'}</h2>
+    ${rows.slice(0,8).map(r=>`<a class="srow${r.days<=1?' warn':''}" href="${esc(r.href)}"${r.ext?' target="_blank" rel="noopener"':''}><b>${esc(r.title)}<small>${esc(r.sub)} · ${DAYS[r.d.getDay()].slice(0,3)} ${r.d.getDate()} ${MON[r.d.getMonth()]}</small></b><span class="r">${r.days<0?'Overdue':r.days===0?'Today':r.days===1?'Tomorrow':r.days+' days'}</span></a>`).join('')}</section>`;
+}
 function render(){
   const t=tab(),secs=list();
   nav.innerHTML=secs.map(s=>`<a href="#${s.id}" style="--c:${esc(s.color)}"${t===s.id&&!S.q?' aria-current="page"':''}>${icon(s.id)}${esc(s.title)}</a>`).join('');
@@ -411,7 +419,7 @@ function render(){
   if(!s){location.hash=secs[0].id;return}
   const cards=s.cards||[];
   main.innerHTML=`<h2 class="pg">${esc(s.title)}</h2>${s.blurb?`<p class="lede">${esc(s.blurb)}</p>`:'<div style="height:12px"></div>'}
-    ${s.id==='study'?(canvasSummary()||summary(s)):summary(s)}
+    ${s.id==='todo'?weekStrip():s.id==='study'?(canvasSummary()||summary(s)):summary(s)}
     ${s.id==='study'?canvasCard(s):''}
     ${(s.charts||[]).map(chartHtml).join('')}
     ${cards.map((c,ci)=>card(s,c,ci)).join('')}
@@ -451,7 +459,7 @@ function save(sid,cards){
         S.secs=d.sections;toast('Saved');return true;
       }catch(e){
         if(e===409||e===422)continue;
-        toast(e===401||e===403?'Your access key isn’t working':'Couldn’t save. Check your connection.');return false;
+        toast(e===401||e===403?'Your access key isn’t working':navigator.onLine===false?'You’re offline, that wasn’t saved':'Couldn’t save. Check your connection.');return false;
       }
     }
     toast('Couldn’t save. Try again.');return false;
@@ -477,14 +485,20 @@ async function load(){
     const nx=cur?cur.data.sections:{};
     const same=S.ready&&JSON.stringify(nx)===JSON.stringify(S.secs);
     S.secs=nx;S.ready=true;
-    try{const a=await ghGet('assignments.json');if(a&&Array.isArray(a.data.items)){CV.items=a.data.items.map(x=>({...x,due:new Date(x.due)})).filter(x=>!isNaN(x.due)).sort((x,y)=>x.due-y.due);CV.at=Date.parse(a.data.updated)||null}}catch{}
+    try{localStorage.setItem('lh-cache',JSON.stringify({secs:nx,at:Date.now()}))}catch{}
+    try{const a=await ghGet('assignments.json');if(a&&Array.isArray(a.data.items)){try{localStorage.setItem('lh-cv',JSON.stringify(a.data))}catch{}CV.items=a.data.items.map(x=>({...x,due:new Date(x.due)})).filter(x=>!isNaN(x.due)).sort((x,y)=>x.due-y.due);CV.at=Date.parse(a.data.updated)||null}}catch{}
     if(!S.edit&&(!same||tab()==='study'))render();
   }catch(e){
     if(e===401||e===403||e===404){setupScreen('That access key didn’t work. Make a new one and paste it in.')}
     else if(!S.ready)main.innerHTML='<p class="msg">Couldn’t reach GitHub. Check your connection and pull down to reload.</p>';
+    else toast('Offline, showing your saved copy');
   }finally{loading=false}
 }
-function boot(){load()}
+function boot(){
+  if(GH){try{const c=JSON.parse(localStorage.getItem('lh-cache')||'null');if(c&&c.secs){S.secs=c.secs;S.ready=true}
+    const v=JSON.parse(localStorage.getItem('lh-cv')||'null');if(v&&Array.isArray(v.items)){CV.items=v.items.map(x=>({...x,due:new Date(x.due)})).filter(x=>!isNaN(x.due)).sort((x,y)=>x.due-y.due);CV.at=Date.parse(v.updated)||null}}catch{}
+    if(S.ready)render()}
+  load()}
 
 main.addEventListener('click',async e=>{
   const b=e.target.closest('[data-act]');if(!b)return;
