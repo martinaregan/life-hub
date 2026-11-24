@@ -96,6 +96,7 @@ main{padding-top:6px;padding-bottom:110px}
 .card.fold .ft{flex:1;min-width:0}
 .card.fold .ft b{display:block;font-size:17px;font-weight:900}
 .card.fold .ft small{display:block;font-size:14px;font-weight:700;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch .chev.up{display:inline-block;transform:rotate(90deg);font-size:24px;font-weight:700;color:var(--mute);margin-right:6px;line-height:1}
 .card.fold .chev{font-size:26px;font-weight:700;color:var(--mute);line-height:1}
 .ch .ed{border:0;background:none;color:var(--mute);font-weight:800;font-size:14px;cursor:pointer;min-height:36px;padding:0 4px}
 .card .sub{margin:2px 0 4px 32px;color:var(--mute);font-size:14px;font-weight:700}
@@ -342,7 +343,7 @@ function card(s,c,ci,q){
   const vis=open?ordered:ordered.slice(0,SHOW);
   const hidden=ordered.length-vis.length+(c.n&&!open?1:0);
   return `<article class="card${open?'':' closed'}" id="c-${s.id}-${ci}" style="--c:${esc(s.color)}">
-    <div class="ch"><span class="ic">${icon(s.id)}</span><h3>${hl(c.t,q)}</h3><button class="ed" data-act="edit" data-s="${s.id}" data-c="${ci}">Edit</button></div>
+    <div class="ch"${big&&!q?` data-act="less" data-k="${esc(key)}" style="cursor:pointer"`:''}><span class="ic">${icon(s.id)}</span><h3>${hl(c.t,q)}</h3>${big&&!q?'<span class="chev up">‹</span>':''}<button class="ed" data-act="edit" data-s="${s.id}" data-c="${ci}">Edit</button></div>
     ${c.list&&!checks.length?'<p class="sub">Nothing on the list</p>':''}${c.list&&checks.length?`<p class="sub">${checks.length-done} left</p>`:''}
     ${checks.length&&!c.list?`<p class="sub">${done===checks.length?'All done':`${done} of ${checks.length} done`}</p><div class="prog"><i style="width:${done/checks.length*100}%"></i></div>`:c.s?`<p class="sub">${hl(c.s,q)}</p>`:''}
     ${vis.length?`<div class="rows">${vis.map(({f,fi})=>`<div class="r1${TODO.test(f.l||'')?' todo':''}">${val(f,ci,fi,s.id,q)}</div>`).join('')}</div>`:''}
