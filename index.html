@@ -394,7 +394,8 @@ function chartHtml(c){
     body=`<div class="cols">${it.map(x=>`<div><em>${x.v>=1000?(x.v/1000).toFixed(1)+'k':Math.round(x.v)}</em><i class="${x.v>avg*1.5?'hi':''}" style="height:${x.v/mx*100}%"></i>${esc(x.l)}</div>`).join('')}</div>`;
   }else{
     const mx=Math.max(...it.map(x=>x.v))||1;
-    body=`<div class="hb">${it.map(x=>`<div class="r"><span>${esc(x.l)}</span><div class="tr"><i style="width:${x.v/mx*100}%"></i></div><b>${eur(x.v)}</b></div>`).join('')}</div>`;
+    body=`<div class="hb">${it.map(x=>`<div class="r"><span>${esc(x.l)}</span><div class="tr"><i style="width:${x.v/mx*100}%"></i></div><b>${eur(x.v)}</b></div>`).join('')}</div>`
+    if(c.total)body+=`<div class="hb" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)"><div class="r"><span style="font-weight:900">Total</span><span></span><b style="font-size:17px">${eur(it.reduce((a,x)=>a+x.v,0))}</b></div></div>`;
   }
   return `<section class="chart"><h3>${esc(c.t)}</h3>${c.s?`<p class="cs">${esc(c.s)}</p>`:'<div style="height:10px"></div>'}${body}${c.n?`<p class="note" style="margin-bottom:0">${esc(c.n)}</p>`:''}</section>`;
 }
