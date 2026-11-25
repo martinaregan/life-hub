@@ -685,13 +685,11 @@ function layoutHtml(s,sv){
   return h+(rest?`<h4 class="grp">More</h4>${rest}`:'');
 }
 function receiptHtml(s){
-  const p=s.plan,k=planCalc(s),b=(m,t)=>`<button type="button" data-act="rent" data-m="${m}" aria-pressed="${p.mode===m||(m==='half'&&!p.mode)?'true':'false'}">${t}</button>`;
+  const p=s.plan,k=planCalc(s);
   const ln=(l,v,cls)=>`<div class="rl ${cls||''}"><span>${l}</span><i></i><b>${v}</b></div>`;
   const now=new Date();
   return `<section class="rcpt"><div class="rh"><b>PAYDAY RECEIPT</b><small>${MON[now.getMonth()].toUpperCase()} ${now.getFullYear()} · MARTINA</small></div>
     ${ln('Pay in','+ '+eur(p.pay),'in')}
-    <div class="rs">Rent split</div><div class="seg rseg">${b('half','50/50')}${b('eoin','Eóin pays '+eur(p.eoin))}${b('custom','Other')}</div>
-    ${p.mode==='custom'?`<label class="cust">Your share <input data-rent type="number" inputmode="numeric" min="0" step="10" value="${esc(String(p.custom||''))}"></label>`:''}
     ${ln('Rent and house bills','− '+eur(k.rent))}${ln('Bills','− '+eur(k.bills))}${ln('Spending (about '+eur(p.spend*12/52)+' a week)','− '+eur(p.spend))}${p.cats?`<div class="rsub">${Object.entries(p.cats).map(([k,v])=>`<div><span>${esc(k)}</span><i></i><b>${eur(v)}</b></div>`).join('')}</div>`:''}${p.pot?ln(esc(p.potLabel||'Pot'),'− '+eur(p.pot)):''}
     <div class="rtot${k.save<0?' bad':''}"><span>${k.save<0?'SHORT BY':p.pot?'LEFT OVER':'INTO SAVINGS'}</span><b>${eur(Math.abs(k.save))}</b></div>
     <p class="rthx">${p.pot?`*** ${eur(p.pot)} a month builds up in the pot ***`:'*** every month, on payday ***'}</p></section>`;
@@ -702,7 +700,7 @@ function goalHtml(s){
   const have=num(/now/i),goal=num(/goal/i),k=planCalc(s),pc=goal?Math.min(100,Math.round(have/goal*100)):0,net=k.save+(s.plan.pot||0)-(s.plan.potUse||0);
   const mths=net>0&&goal>have?Math.ceil((goal-have)/net):0,when=new Date();when.setMonth(when.getMonth()+mths);
   const ci=(s.cards||[]).indexOf(c);
-  return `<a class="goal" href="#money/${ci}"><div class="gt"><span>Safety net</span><b>${eur(have)} <small>of ${eur(goal)}</small></b></div><div class="gb"><u style="width:${pc}%"></u></div><small>${goal<=have?'Done. Nice.':mths?`About ${MON[when.getMonth()]} ${when.getFullYear()} at about ${eur(net)} a month, sooner with the calf money`:'Not moving at this rent split'}</small></a>`;
+  return `<a class="goal" href="#money/${ci}"><div class="gt"><span>Safety net</span><b>${eur(have)} <small>of ${eur(goal)}</small></b></div><div class="gb"><u style="width:${pc}%"></u></div><small>${goal<=have?'Done. Nice.':mths?`About ${MON[when.getMonth()]} ${when.getFullYear()} at about ${eur(net)} a month, sooner with the calf money`:'Not moving at this budget'}</small></a>`;
 }
 function spendHtml(s){
   const p=s.plan,cats=p.cats||{},L=s.spends||[],now=new Date();
@@ -737,10 +735,8 @@ function owesHtml(s){
 function planCalc(s){
   const p=s.plan,bc=(s.charts||[]).find(c=>/monthly bills/i.test(c.t));
   const bills=bc?bc.items.reduce((a,x)=>a+(+x.v||0),0):(+p.bills||0);
-  const half=Math.round(p.rentTotal/2),eo=p.rentTotal-p.eoin;
-  const rent=p.mode==='eoin'?eo:p.mode==='custom'?(+p.custom||0):half;
-  const label=p.mode==='eoin'?'Eóin pays '+eur(p.eoin):p.mode==='custom'?'your share '+eur(rent):'rent 50/50';
-  return {rent,bills,half,eo,label,save:p.pay-rent-bills-p.spend-(+p.pot||0)};
+  const rent=+p.rent||400,label='rent '+eur(rent);
+  return {rent,bills,label,save:p.pay-rent-bills-p.spend-(+p.pot||0)};
 }
 function planView(s){
   if(!s.plan)return s;const k=planCalc(s);
@@ -749,16 +745,7 @@ function planView(s){
   const charts=(s.charts||[]).map(c=>/where your pay goes/i.test(c.t)?{...c,s:'Each month, '+k.label+'. Savings is what’s left',items:[{l:'Rent and house bills',v:k.rent},{l:'Spending budget',v:s.plan.spend},{l:'Bills',v:k.bills},{l:'Savings',v:Math.max(k.save,0)}].concat(s.plan.pot?[{l:s.plan.potLabel||'Pot',v:s.plan.pot}]:[])}:c);
   return {...s,stats,charts,statsNote:'This month'};
 }
-function planHtml(s){
-  if(!s.plan)return '';const p=s.plan,k=planCalc(s);
-  const b=(m,t)=>`<button type="button" data-act="rent" data-m="${m}" aria-pressed="${p.mode===m||(m==='half'&&!p.mode)?'true':'false'}">${t}</button>`;
-  const row=(l,v,neg)=>`<div class="r1"><div class="tx"><small>${l}</small><b>${neg?'− ':''}${eur(v)}</b></div></div>`;
-  return `<section class="card plan" style="--c:${esc(s.color)}"><div class="ch"><span class="ic">${icon(s.id)}</span><h3>Rent split</h3></div>
-    <p class="sub">Pick how rent is split and the rest works itself out</p>
-    <div class="seg">${b('half','50/50 · '+eur(k.half))}${b('eoin','Eóin pays '+eur(p.eoin)+' · '+eur(k.eo))}${b('custom','Other amount')}</div>
-    ${p.mode==='custom'?`<label class="cust">Your share of the rent <input data-rent type="number" inputmode="numeric" min="0" step="10" value="${esc(String(p.custom||''))}"></label>`:''}
-    <div class="res${k.save<0?' bad':''}"><span>${k.save<0?'Short by':'Into savings'}</span><b>${eur(Math.abs(k.save))}<small> a month</small></b></div></section>`;
-}
+function planHtml(s){return ''}
 async function setPlan(sid,ch){
   const sec=S.secs[sid];sec.plan=Object.assign({},sec.plan,ch);render();
   await save(sid,sec.cards,{plan:sec.plan});
@@ -907,7 +894,6 @@ main.addEventListener('click',async e=>{
     if(!(await save(s,cards)))toast('Couldn’t save that tick');
     return}
   if(a==='clear'){const [s,c]=b.dataset.k.split('/');const cards=JSON.parse(JSON.stringify(S.secs[s].cards));cards[+c].f=cards[+c].f.filter(f=>!(f.k==='check'&&f.v));S.secs[s].cards=cards;render();await save(s,cards);return}
-  if(a==='rent'){setPlan(tab(),{mode:b.dataset.m});return}
   if(a==='owerm'){const sec=S.secs[tab()];const L=(sec.owes||[]).slice();L.splice(+b.dataset.i,1);sec.owes=L;render();await save(tab(),sec.cards,{owes:L});return}
   if(a==='sprm'){const sec=S.secs[tab()];const L=(sec.spends||[]).slice();L.splice(+b.dataset.i,1);sec.spends=L;render();await save(tab(),sec.cards,{spends:L});return}
   if(a==='more'||a==='less'){const k=b.dataset.k;if(a==='more')OPEN.add(k);else OPEN.delete(k);render();return}
@@ -937,7 +923,6 @@ main.addEventListener('click',async e=>{
 });
 main.addEventListener('submit',async e=>{const f=e.target.closest('[data-owe]');if(!f)return;e.preventDefault();e.stopImmediatePropagation();const a=Math.round(parseFloat(f.a.value)*100)/100,who=f.who.value.trim();if(!(a>0)||!who)return;const sec=S.secs[tab()],t=new Date(),d=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');const L=(sec.owes||[]).concat([{d,a,who,dir:f.dir.value,n:f.n.value.trim()}]);sec.owes=L;render();await save(tab(),sec.cards,{owes:L})});
 main.addEventListener('submit',async e=>{const f=e.target.closest('[data-spend]');if(!f)return;e.preventDefault();e.stopImmediatePropagation();const a=Math.round(parseFloat(f.a.value)*100)/100;if(!(a>0))return;const sec=S.secs[tab()],t=new Date(),d=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');const L=(sec.spends||[]).concat([{d,a,c:f.c.value,n:f.n.value.trim()}]);sec.spends=L;render();await save(tab(),sec.cards,{spends:L})});
-main.addEventListener('change',e=>{const i=e.target.closest('[data-rent]');if(i)setPlan(tab(),{custom:Math.max(0,Math.round(+i.value||0))})});
 main.addEventListener('submit',async e=>{
   e.preventDefault();
   if(e.target.dataset.add){const [s,c]=e.target.dataset.add.split('/');const t=e.target.elements.it.value.trim();if(!t)return;
