@@ -321,9 +321,7 @@ nav.tabs{flex:none;position:relative;z-index:30;background:var(--card);border-to
 .navin a{flex:1 1 0;min-width:52px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 7px;border-radius:16px;text-decoration:none;color:var(--mute);font-size:11.5px;font-weight:800;white-space:nowrap}
 .navin a svg{width:26px;height:26px;stroke:var(--c);fill:color-mix(in srgb,var(--c) 22%,transparent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .navin a[aria-current]{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accentink)}
-.fab{position:absolute;right:max(16px,calc(50% - 264px));bottom:18px;z-index:31;width:62px;height:62px;border-radius:50%;border:0;background:var(--accent);color:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:0 10px 24px -8px var(--accent)}
-.fab{transition:transform .2s,opacity .2s}.fab.away{transform:translateY(90px) scale(.6);opacity:0;pointer-events:none}
-.fab svg{width:28px;height:28px;stroke:#fff;stroke-width:3;stroke-linecap:round;fill:none}
+.round.add{background:var(--accent);border-color:var(--accent)}.round.add svg{stroke:#fff;stroke-width:3}
 .asg{display:flex;align-items:center;gap:12px;border-top:1px solid var(--line);padding:12px 0;text-decoration:none;color:inherit}
 .asg:first-child{border-top:0}
 .asg .dd{flex:none;width:48px;text-align:center;font-weight:900;font-size:20px;line-height:1}
@@ -395,6 +393,7 @@ nav.tabs{flex:none;position:relative;z-index:30;background:var(--card);border-to
   <div class="wrap">
     <div class="row1">
       <h1 id="home">Life hub</h1>
+      <button class="round add" id="fab" aria-label="Add a card"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
       <button class="round" id="bsearch" aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button>
       <button class="round" id="btheme" aria-label="Light or dark"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button>
     </div>
@@ -402,7 +401,6 @@ nav.tabs{flex:none;position:relative;z-index:30;background:var(--card);border-to
   </div>
 </header>
 <div id="stage"><div id="scroller"><main class="wrap" id="main"><p class="msg">Opening your hub…</p></main></div>
-<button class="fab" id="fab" aria-label="Add a card"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
 <div id="toast" role="status"></div></div>
 <nav class="tabs" aria-label="Sections"><div class="navin" id="nav"></div></nav>
 <script>
@@ -956,13 +954,6 @@ render();
 boot();
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&!S.edit)load()});
 }
-</script>
-<script>
-(()=>{const sc=document.getElementById('scroller'),fab=document.getElementById('fab');let y=0;
-const near=()=>sc.scrollTop+sc.clientHeight>=sc.scrollHeight-8;
-sc.addEventListener('scroll',()=>{const n=sc.scrollTop;if(n>y+6&&!near())fab.classList.add('away');else if(n<y-6||near()||n<40)fab.classList.remove('away');y=n},{passive:true});
-document.addEventListener('focusin',e=>{if(e.target.matches('input,select,textarea'))fab.classList.add('away')});
-document.addEventListener('focusout',()=>fab.classList.remove('away'));})();
 </script>
 </body>
 </html>
