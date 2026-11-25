@@ -287,6 +287,15 @@ body.p-christmas{--accent:#b8324a;--accentink:light-dark(#8e2340,#ec8a8f);--grad
 .ow-r em{font-style:normal;font-weight:900;font-size:16px}
 .rsub{margin:-2px 0 8px 14px;padding-left:10px;border-left:2px solid #e3dccf;font-size:12.5px;color:#6b6358}
 .rsub div{display:flex;gap:6px;align-items:baseline;margin:3px 0}.rsub i{flex:1;border-bottom:1px dotted #d6cfc2;transform:translateY(-3px)}.rsub b{font-weight:700}
+.rl span,.rsub span{flex:0 1 auto;min-width:0}.rl i,.rsub i{flex:1 1 0;min-width:6px}
+.rl b,.rsub b{flex:none;width:76px;text-align:right}.rl b.wk,.rsub b.wk{width:46px;color:#8a8175;font-weight:700}
+.rcols{display:flex;justify-content:flex-end;gap:6px;font-size:11px;letter-spacing:.1em;color:#8a8175;margin:-4px 0 2px}.rcols span{text-align:right;width:76px}.rcols span:last-child{width:46px}
+.rtot small{display:block;text-align:right;font-size:13px;font-weight:700;color:#8a8175;letter-spacing:0}
+.ac-r{padding:12px 0;border-top:1px solid var(--line)}.ac-r:first-of-type{border-top:0}
+.ac-t{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:2px 10px}.ac-t b{font-size:16px;font-weight:900}.ac-t em{font-style:normal;font-size:13px;font-weight:800;color:var(--mute)}
+.ac-k{display:flex;gap:8px;margin:8px 0 6px}.ac-k div{flex:1;background:var(--soft);border-radius:14px;padding:8px 10px}.ac-k b{display:block;font-size:18px;font-weight:900}.ac-k small{display:block;font-size:12px;font-weight:700;color:var(--mute)}
+.ac-k .now b{color:var(--accentink)}
+.ac-r p{margin:0;font-size:13px;color:var(--mute);white-space:pre-line}
 .grp{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:22px 4px 10px}
 .card.fold{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:var(--ink);padding:16px 18px;margin-bottom:10px;cursor:pointer}
 .card.fold .ic{width:22px;height:22px;flex:none;color:var(--c)}
@@ -305,7 +314,7 @@ body.p-christmas{--accent:#b8324a;--accentink:light-dark(#8e2340,#ec8a8f);--grad
 .r1 .tx small{display:block;font-size:13px;font-weight:700;color:var(--mute);line-height:1.3}
 .r1 .tx b{display:block;font-weight:800;font-size:17px;overflow-wrap:anywhere;white-space:pre-line;line-height:1.35}
 .r1 .tx b a{text-decoration:none;color:var(--accentink)}
-.r1 .when{font-size:14px;font-weight:800;color:var(--mute);white-space:nowrap}
+.r1 .when{font-size:14px;font-weight:800;color:var(--mute)}
 .r1 .when.hot{color:var(--accentink)}
 .r1.todo{background:var(--warn);color:var(--warnink);border-radius:16px;padding:12px 14px;margin:6px 0;border-top:0}
 .r1.todo small{color:inherit;opacity:.75}
@@ -688,6 +697,7 @@ function layoutHtml(s,sv){
       if(it==='goal'){inner+=goalHtml(s);continue}
       if(it==='spend'){inner+=spendHtml(s);continue}
       if(it==='owes'){inner+=owesHtml(s);continue}
+      if(it==='accounts'){inner+=accountsHtml(s);continue}
       const [k,...r]=it.split(':'),t=r.join(':');
       if(k==='card'){const ci=cards.findIndex(c=>c.t===t);if(ci>=0){used.add(ci);inner+=card(s,cards[ci],ci)}}
       else if(k==='chart'){const c=ch.find(c=>c.t===t);if(c)inner+=chartHtml(c)}
@@ -698,14 +708,30 @@ function layoutHtml(s,sv){
   return h+(rest?`<h4 class="grp">More</h4>${rest}`:'');
 }
 function receiptHtml(s){
-  const p=s.plan,k=planCalc(s);
-  const ln=(l,v,cls)=>`<div class="rl ${cls||''}"><span>${l}</span><i></i><b>${v}</b></div>`;
+  const p=s.plan,k=planCalc(s),W=v=>eur(v*12/52);
+  const ln=(l,v,sg,cls)=>`<div class="rl ${cls||''}"><span>${l}</span><i></i><b>${sg} ${eur(v)}</b><b class="wk">${W(v)}</b></div>`;
   const now=new Date();
   return `<section class="rcpt"><div class="rh"><b>PAYDAY RECEIPT</b><small>${MON[now.getMonth()].toUpperCase()} ${now.getFullYear()} · MARTINA</small></div>
-    ${ln('Pay in','+ '+eur(p.pay),'in')}
-    ${ln('Rent and house bills','− '+eur(k.rent))}${ln('Bills','− '+eur(k.bills))}${ln('Spending (about '+eur(p.spend*12/52)+' a week)','− '+eur(p.spend))}${p.cats?`<div class="rsub">${Object.entries(p.cats).map(([k,v])=>`<div><span>${esc(k)}</span><i></i><b>${eur(v)}</b></div>`).join('')}</div>`:''}${p.pot?ln(esc(p.potLabel||'Pot'),'− '+eur(p.pot)):''}
-    <div class="rtot${k.save<0?' bad':''}"><span>${k.save<0?'SHORT BY':p.pot?'LEFT OVER':'INTO SAVINGS'}</span><b>${eur(Math.abs(k.save))}</b></div>
+    <div class="rcols"><span>MONTH</span><span>WEEK</span></div>
+    ${ln('Pay in',p.pay,'+','in')}
+    ${ln('Rent and house bills',k.rent,'−')}${ln('Bills',k.bills,'−')}${ln('Spending',p.spend,'−')}${p.cats?`<div class="rsub">${Object.entries(p.cats).map(([k,v])=>`<div><span>${esc(k)}</span><i></i><b>${eur(v)}</b><b class="wk">${W(v)}</b></div>`).join('')}</div>`:''}${p.pot?ln(esc(p.potLabel||'Pot'),p.pot,'−'):''}
+    <div class="rtot${k.save<0?' bad':''}"><span>${k.save<0?'SHORT BY':p.pot?'LEFT OVER':'INTO SAVINGS'}</span><b>${eur(Math.abs(k.save))}<small>${W(Math.abs(k.save))} a week</small></b></div>
     <p class="rthx">${p.pot?`*** ${eur(p.pot)} a month builds up in the pot ***`:'*** every month, on payday ***'}</p></section>`;
+}
+function accountsHtml(s){
+  const A=(s.plan||{}).accounts||[];if(!A.length)return '';
+  const W=v=>eur(v*12/52),pd=+(s.plan.payday||25),t=new Date();t.setHours(0,0,0,0);
+  const last=new Date(t.getFullYear(),t.getMonth()-(t.getDate()<pd?1:0),pd),next=new Date(last.getFullYear(),last.getMonth()+1,pd);
+  const frac=(t-last)/(next-last),dl=Math.round((next-t)/864e5);
+  const tot=A.reduce((a,x)=>a+(+x.in||0),0);
+  const row=x=>{
+    const live=x.spend?Math.max(0,Math.round(x.spend*(1-frac)/10)*10):null;
+    return `<div class="ac-r"><div class="ac-t"><b>${esc(x.n)}</b><em>${x.in?`+${eur(x.in)} a month · ${W(x.in)} a week`:''}</em></div>
+      <div class="ac-k"><div><small>${esc(x.kl||'Keep in it')}</small><b>${esc(x.keep)}</b></div>${x.spend?`<div><small>To spend a week</small><b>${W(x.spend)}</b></div><div class="now"><small>Spending left, today</small><b>${eur(live)}</b></div>`:''}</div>
+      ${x.p?`<p>${esc(x.p)}</p>`:''}</div>`};
+  return `<section class="card" style="--c:${esc(s.color)};padding-bottom:12px"><div class="ch"><span class="ic">${icon(s.id)}</span><h3>What goes in each account</h3></div>
+    <p class="note" style="border:0;margin:6px 0 4px;padding:0">On payday (the ${pd}th), ${eur(tot)} a month split out, about ${W(tot)} a week. ${dl===0||t.getDate()===pd?'Payday today.':dl+' day'+(dl>1?'s':'')+' until the next one.'}</p>
+    ${A.map(row).join('')}</section>`;
 }
 function goalHtml(s){
   const c=(s.cards||[]).find(c=>/^savings$/i.test(c.t));if(!c)return '';
