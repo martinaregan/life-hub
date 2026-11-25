@@ -335,6 +335,7 @@ nav.tabs{flex:none;position:relative;z-index:30;background:var(--card);border-to
 .navin a svg{width:26px;height:26px;stroke:var(--c);fill:color-mix(in srgb,var(--c) 22%,transparent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .navin a[aria-current]{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accentink)}
 .round.add{background:var(--accent);border-color:var(--accent)}.round.add svg{stroke:#fff;stroke-width:3}
+.owes .ow-sum{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none;font-size:16px}.owes .ow-sum::-webkit-details-marker{display:none}.owes .ow-sum small{margin-left:auto;color:var(--mute);font-weight:700;font-size:13px}.owes .ow-sum:after{content:'▾';color:var(--mute);margin-left:6px}.owes[open] .ow-sum{margin-bottom:12px}.owes[open] .ow-sum:after{content:'▴'}
 .asg{display:flex;align-items:center;gap:12px;border-top:1px solid var(--line);padding:12px 0;text-decoration:none;color:inherit}
 .asg:first-child{border-top:0}
 .asg .dd{flex:none;width:48px;text-align:center;font-weight:900;font-size:20px;line-height:1}
@@ -737,12 +738,12 @@ function owesHtml(s){
   const e2=v=>'€'+(+v).toLocaleString('en-GB',{minimumFractionDigits:v%1?2:0,maximumFractionDigits:2});
   const tot=a=>a.reduce((t,x)=>t+(+x.a||0),0);
   const row=x=>`<div class="ow-r"><b>${esc(x.who)}<small>${esc(x.n||'')}${x.n?' · ':''}${fmt(new Date(x.d))}</small></b><em class="${x.dir==='them'?'pos':'neg'}">${e2(x.a)}</em><button class="pill" data-act="owerm" data-i="${x.i}">Settled</button></div>`;
-  return `<section class="card owes" style="--c:${esc(s.color)}"><div class="ch"><span class="ic">${icon(s.id)}</span><h3>Who owes who</h3></div>
-    <div class="ow-top"><div class="pos"><b>${e2(tot(them))}</b><small>owed to you</small></div><div class="neg"><b>${e2(tot(me))}</b><small>you owe</small></div></div>
+  const sum=L.length?`${e2(tot(them))} owed to you · ${e2(tot(me))} you owe`:'All square';
+  return `<details class="card owes" style="--c:${esc(s.color)}" ${window.__owOpen?'open':''} ontoggle="window.__owOpen=this.open"><summary class="ow-sum"><span class="ic">${icon(s.id)}</span><b>Who owes who</b><small>${sum}</small></summary>
     <form class="owf" data-owe="1"><select name="dir" aria-label="Direction"><option value="them">They owe me</option><option value="me">I owe them</option></select><input name="who" placeholder="Who" required autocomplete="off" aria-label="Who"><input name="a" type="number" inputmode="decimal" step="0.01" min="0" placeholder="€" required aria-label="Amount"><input name="n" placeholder="What for? (optional)" autocomplete="off" aria-label="Note"><button class="pill go" type="submit">Add</button></form>
     ${them.length?`<h4 class="sp-h">Owed to you</h4>${them.map(row).join('')}`:''}
     ${me.length?`<h4 class="sp-h">You owe</h4>${me.map(row).join('')}`:''}
-    ${!L.length?'<p class="note">All square. Add anyone who owes you, or anyone you owe.</p>':''}</section>`;
+</details>`;
 }
 function planCalc(s){
   const p=s.plan,bc=(s.charts||[]).find(c=>/monthly bills/i.test(c.t));
