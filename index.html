@@ -322,6 +322,7 @@ nav.tabs{flex:none;position:relative;z-index:30;background:var(--card);border-to
 .navin a svg{width:26px;height:26px;stroke:var(--c);fill:color-mix(in srgb,var(--c) 22%,transparent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .navin a[aria-current]{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accentink)}
 .fab{position:absolute;right:max(16px,calc(50% - 264px));bottom:18px;z-index:31;width:62px;height:62px;border-radius:50%;border:0;background:var(--accent);color:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:0 10px 24px -8px var(--accent)}
+.fab{transition:transform .2s,opacity .2s}.fab.away{transform:translateY(90px) scale(.6);opacity:0;pointer-events:none}
 .fab svg{width:28px;height:28px;stroke:#fff;stroke-width:3;stroke-linecap:round;fill:none}
 .asg{display:flex;align-items:center;gap:12px;border-top:1px solid var(--line);padding:12px 0;text-decoration:none;color:inherit}
 .asg:first-child{border-top:0}
@@ -955,6 +956,13 @@ render();
 boot();
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&!S.edit)load()});
 }
+</script>
+<script>
+(()=>{const sc=document.getElementById('scroller'),fab=document.getElementById('fab');let y=0;
+const near=()=>sc.scrollTop+sc.clientHeight>=sc.scrollHeight-8;
+sc.addEventListener('scroll',()=>{const n=sc.scrollTop;if(n>y+6&&!near())fab.classList.add('away');else if(n<y-6||near()||n<40)fab.classList.remove('away');y=n},{passive:true});
+document.addEventListener('focusin',e=>{if(e.target.matches('input,select,textarea'))fab.classList.add('away')});
+document.addEventListener('focusout',()=>fab.classList.remove('away'));})();
 </script>
 </body>
 </html>
